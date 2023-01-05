@@ -589,6 +589,14 @@ body <- dashboardBody(
               column(9,
                      box(id = "QCBox2", title = p("Violin Plots", actionBttn("downloadQCViolin", "Download Plot", icon = icon("download"))), status = "warning", solidHeader = F,
                          collapsible = TRUE,  width = NULL,
+                         
+                         fluidRow(
+                           column(6,
+                                  sliderInput("sizeQC", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
+                                              min = 0, max = 20,
+                                              value = 2, step = 1))
+                           ),
+                           
                          withSpinner(plotOutput("plot", height = "1200"))))
             ),
             fluidRow(
@@ -813,6 +821,14 @@ body <- dashboardBody(
               column(9,
                      box(id = "QCBox22", title = p("Violin Plots", actionBttn("downloadQCViolin2", "Download Plot", icon = icon("download"))), status = "warning", solidHeader = F,
                          collapsible = TRUE,  width = NULL,
+                         
+                         fluidRow(
+                           column(6,
+                                  sliderInput("sizeQC2", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
+                                              min = 0, max = 20,
+                                              value = 2, step = 1))
+                         ),
+                         
                          withSpinner(plotOutput("plotCombine", height = "1200"))))
             ),
             fluidRow(
@@ -951,7 +967,9 @@ body <- dashboardBody(
                           <li>A linear transformation is applied to scale expression levels so that the mean expression of genes across cells equates to zero and 
                           the variance across cells equates to one. This step gives equal weight in downstream analyses, so that highly-expressed genes do not dominate.</li>
                           <li>Dimensionality reduction using Principal Component Analysis (<b>PCA</b>) with the user defined number of variable features to incorporate.
-                          Seurat prioritises a set of highly variable genes when performing its dimensionality reduction, this number may be altered in the <b>NEW</b> box below.</li></ol><br>')),
+                          Seurat prioritises a set of highly variable genes when performing its dimensionality reduction, this number may be altered in the <b>NEW</b> box below.</li>
+                          <li>An option to impute dropouts (false zeros in the dataset due to low amounts of mRNA in individual cells resulting in insufficient mRNA capture) is available. 
+                          The <a href="https://www.nature.com/articles/s41467-021-27729-z" target="_blank">Adaptively-thresholded low rank approximation (ALRA) method</a> to impute dropouts is used.</li></ol><br>')),
                   
                   img(id="DR_ICARUS",src="DR_ICARUS.png",width="60%"), br(), br(),
                   
@@ -1031,7 +1049,9 @@ body <- dashboardBody(
                           <a href="https://satijalab.org/seurat/articles/integration_rpca.html" target="_blank">Reciprocal PCA (RPCA)</a> or 
                           <a href="https://doi.org/10.1038/s41592-019-0619-0" target="_blank">Harmony</a> methodologies. 
                           For CCA and RPCA methods, the number of <b> k-anchors </b> (strength of integration) 
-                          can be adjusted, please increase the k-anchors parameter (default value = 5) for samples where integration of certain cell types are not aligned. </li></ol><br>')),
+                          can be adjusted, please increase the k-anchors parameter (default value = 5) for samples where integration of certain cell types are not aligned. </li>
+                          <li>An option to impute dropouts (false zeros in the dataset due to low amounts of mRNA in individual cells resulting in insufficient mRNA capture) is available. 
+                          The <a href="https://www.nature.com/articles/s41467-021-27729-z" target="_blank">Adaptively-thresholded low rank approximation (ALRA) method</a> to impute dropouts is used.</li></ol><br>')),
                   
                   img(id="DR2_ICARUS",src="DR2_ICARUS.png",width="100%"), br(), br(),
                   
@@ -4158,6 +4178,8 @@ server <- function(input, output, session) {
                    incProgress(0.1)
                    
                    incProgress(0.2)
+                   library(scCustomize)
+                   library(SeuratWrappers)
                    library(MAST)
                    library(DESeq2)
                    library(BiocParallel)
@@ -4203,6 +4225,8 @@ server <- function(input, output, session) {
                    #Load
                    seuratreactive$obj_original <- NULL
                    seuratreactive$matrixtable <- NULL
+                   seuratreactive$mincells <- NULL
+                   seuratreactive$minfeatures <- NULL
                    
                    #Doublet
                    seuratreactive$plot.data.doublets <- NULL
@@ -4213,6 +4237,8 @@ server <- function(input, output, session) {
                    #Load2
                    seuratreactive$obj_original2 <- NULL
                    seuratreactive$matrixtable2 <- NULL
+                   seuratreactive$mincellsCombine <- NULL
+                   seuratreactive$minfeaturesCombine <- NULL
                    
                    #QC
                    seuratreactive$objQC <- NULL
@@ -4248,6 +4274,7 @@ server <- function(input, output, session) {
                    seuratreactive$obj <- NULL
                    seuratreactive$variablefeatures <- NULL
                    seuratreactive$SCTransformDR <- NULL
+                   seuratreactive$ALRAL <- NULL
                    
                    #DR2
                    seuratreactive$obj <- NULL
@@ -4256,6 +4283,7 @@ server <- function(input, output, session) {
                    seuratreactive$VFintegrated <- NULL
                    seuratreactive$integrationreduction <- NULL
                    seuratreactive$kanchor <- NULL
+                   seuratreactive$ALRAL2 <- NULL
                    
                    #C
                    seuratreactive$integera <- NULL
@@ -6191,6 +6219,14 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       
+      #Load
+      mincells <- seuratreactive$mincells 
+      minfeatures <- seuratreactive$minfeatures 
+      
+      #Load2
+      mincellsCombine <- seuratreactive$mincellsCombine 
+      minfeaturesCombine <- seuratreactive$minfeaturesCombine 
+      
       #QC
       PostQC_dataset1 <- seuratreactive$objQC
       type <- seuratreactive$type
@@ -6233,6 +6269,7 @@ server <- function(input, output, session) {
       Final_Seurat_Object <- seuratreactive$obj
       variablefeatures <- seuratreactive$variablefeatures
       SCTransformDR <- seuratreactive$SCTransformDR
+      ALRAL <- seuratreactive$ALRAL
       
       #DR2
       Combined.list <- seuratreactive$Combined.list
@@ -6240,6 +6277,7 @@ server <- function(input, output, session) {
       integrationreduction <- seuratreactive$integrationreduction
       kanchor <- seuratreactive$kanchor
       SCTransformDR2 <- seuratreactive$SCTransformDR2
+      ALRAL2 <- seuratreactive$ALRAL2
       
       #C
       NumberofPCs_GraphConstruction <- seuratreactive$integera
@@ -6426,13 +6464,13 @@ server <- function(input, output, session) {
       geneListPathway <- seuratreactive$geneListPA
       
       save("PostQC_dataset1", "type", "original_dataset1", "QC_nFeature_threshold1_dataset1", "QC_nFeature_threshold2_dataset1", "QC_nCount_threshold1_dataset1", "QC_nCount_threshold2_dataset1",
-           "QC_percent.mt_threshold1_dataset1", "QC_percent.mt_threshold2_dataset1", "QC_percent.ribo_threshold1_dataset1", "QC_percent.ribo_threshold2_dataset1", 
+           "QC_percent.mt_threshold1_dataset1", "QC_percent.mt_threshold2_dataset1", "QC_percent.ribo_threshold1_dataset1", "QC_percent.ribo_threshold2_dataset1", "mincells", "minfeatures",
            "Remove", "Removed", "doublesim", "plot.data.doublets",
            "PostQC_dataset2", "type2", "original_dataset2", "QC_nFeature_threshold1_dataset2", "QC_nFeature_threshold2_dataset2", "QC_nCount_threshold1_dataset2", "QC_nCount_threshold2_dataset2",
-           "QC_percent.mt_threshold1_dataset2", "QC_percent.mt_threshold2_dataset2", "QC_percent.ribo_threshold1_dataset2", "QC_percent.ribo_threshold2_dataset2",
+           "QC_percent.mt_threshold1_dataset2", "QC_percent.mt_threshold2_dataset2", "QC_percent.ribo_threshold1_dataset2", "QC_percent.ribo_threshold2_dataset2", "mincellsCombine", "minfeaturesCombine",
            "Remove2", "Removed2", "doublesim2", "plot.data.doublets2", 
-           "Final_Seurat_Object", "variablefeatures", "SCTransformDR",
-           "Combined.list", "VFintegrated", "integrationreduction", "kanchor", "SCTransformDR2",
+           "Final_Seurat_Object", "variablefeatures", "SCTransformDR", "ALRAL",
+           "Combined.list", "VFintegrated", "integrationreduction", "kanchor", "SCTransformDR2", "ALRAL2",
            "NumberofPCs_GraphConstruction", "k.param", "n.trees", "Resolution", "NumberofPCs_UMAP", "knn_UMAP", "min.dist_UMAP", "ClusteringAlgorithm", "NumberofPCs_tsne", "Perplexity_tsne",
            "max.iterations_tsne", "CellComposition", "plot.data", "plot.data.original",
            "Regress_Confounder", "Regress_genes", "Regress_pathway", "GeneR", "msigdb", "orgDb", "KEGG_species", "REACTOME_species", "REACTOME_species2",
@@ -6488,7 +6526,7 @@ server <- function(input, output, session) {
     }, 
     
     content = function(file) {
-      ggsave(file, plot = VlnPlot(seuratreactive$objQC, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"), group.by = "orig.ident", pt.size = 2, ncol = 2),
+      ggsave(file, plot = VlnPlot(seuratreactive$objQC, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"), group.by = "orig.ident", pt.size = input$sizeQC, ncol = 2),
              width = input$QCViolinWidth,
              height = input$QCViolinHeight,
              units = "mm",
@@ -6594,7 +6632,7 @@ server <- function(input, output, session) {
     },
     
     content = function(file) {
-      ggsave(file, plot = VlnPlot(seuratreactive$objQC2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"), group.by = "orig.ident", pt.size = 2, ncol = 2),
+      ggsave(file, plot = VlnPlot(seuratreactive$objQC2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"), group.by = "orig.ident", pt.size = input$sizeQC2, ncol = 2),
              width = input$QCViolinWidth2,
              height = input$QCViolinHeight2,
              units = "mm",
@@ -10894,8 +10932,8 @@ server <- function(input, output, session) {
     strLoad <- ifelse (seuratreactive$type == "single",
                        paste("<h4>Load Your Data </h4>",
                              "Name of sample: ", paste(unique(seuratreactive$obj_original@meta.data$orig.ident), collapse = " "), "<br>",
-                             "Include genes detected in at least this many cells: ", input$mincells, "<br>",
-                             "Include cells where at least this many genes are detected: ", input$minfeatures),
+                             "Include genes detected in at least this many cells: ", seuratreactive$mincells, "<br>",
+                             "Include cells where at least this many genes are detected: ", seuratreactive$minfeatures),
                        paste("<h4>Load Your Data </h4>",
                              "Name of sample: ", paste(unique(seuratreactive$obj_original@meta.data$orig.ident), collapse = " "))
     )
@@ -10905,8 +10943,8 @@ server <- function(input, output, session) {
                         ifelse(seuratreactive$type2 == "single",
                                paste("<h4>Load Your Data (Second Dataset) </h4>",
                                      "Name of sample: ", paste(unique(seuratreactive$obj_original2@meta.data$orig.ident), collapse = " "), "<br>",
-                                     "Include genes detected in at least this many cells: ", input$mincells, "<br>",
-                                     "Include cells where at least this many genes are detected: ", input$minfeatures),
+                                     "Include genes detected in at least this many cells: ", seuratreactive$mincellsCombine, "<br>",
+                                     "Include cells where at least this many genes are detected: ", seuratreactive$minfeaturesCombine),
                                ifelse (seuratreactive$type2 == "multiple",
                                        paste("<h4>Load Your Data (Second Dataset) </h4>",
                                              "Name of sample: ", paste(unique(seuratreactive$obj_original2@meta.data$orig.ident), collapse = " ")),
@@ -10950,13 +10988,15 @@ server <- function(input, output, session) {
     strDR <- ifelse (!is.null(seuratreactive$variablefeatures),
                      paste("<h4>Dimensionality Reduction </h4>",
                            "Number of variable features incoporated: ", paste(seuratreactive$variablefeatures), "<br>",
-                           "Normalization method: ", paste(seuratreactive$SCTransformDR)),
+                           "Normalization method: ", paste(seuratreactive$SCTransformDR), "<br>",
+                           "Imputed dropouts: ", paste(seuratreactive$ALRAL)),
                      ifelse(!is.null(seuratreactive$VFintegrated),
                             paste("<h4>Dimensionality Reduction </h4>",
                                   "Number of variable features incoporated: ", paste(seuratreactive$VFintegrated), "<br>",
                                   "Normalization method: ", paste(seuratreactive$SCTransformDR2), "<br>",
                                   "Integration method: ", paste(seuratreactive$integrationreduction), "<br>",
-                                  "Strength of integration: ", paste(seuratreactive$kanchor)),
+                                  "Strength of integration: ", paste(seuratreactive$kanchor), "<br>",
+                                  "Imputed dropouts: ", paste(seuratreactive$ALRAL2)),
                             paste("<h4> Dimensionality Reduction was not completed </h4>"))
     )
     
@@ -11228,6 +11268,7 @@ server <- function(input, output, session) {
                        return(NULL)
                      }
                      
+                     library(scCustomize)
                      library(MAST)
                      library(DESeq2)
                      library(BiocParallel)
@@ -11299,10 +11340,14 @@ server <- function(input, output, session) {
                      #Load
                      seuratreactive$obj_original <- NULL
                      seuratreactive$matrixtable <- NULL
+                     seuratreactive$mincells <- NULL
+                     seuratreactive$minfeatures <- NULL
                      
                      #Load2
                      seuratreactive$obj_original2 <- NULL
                      seuratreactive$matrixtable2 <- NULL
+                     seuratreactive$mincellsCombine <- NULL
+                     seuratreactive$minfeaturesCombine <- NULL
                      
                      #QC
                      seuratreactive$objQC <- NULL
@@ -11343,6 +11388,7 @@ server <- function(input, output, session) {
                      #DR
                      seuratreactive$variablefeatures <- NULL
                      seuratreactive$SCTransformDR <- NULL
+                     seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$Combined.list <- NULL
@@ -11350,6 +11396,7 @@ server <- function(input, output, session) {
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
                      seuratreactive$SCTransformDR2 <- NULL
+                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
                      seuratreactive$integera <- NULL
@@ -11824,6 +11871,14 @@ server <- function(input, output, session) {
                      seuratreactive$REACT <- REACTOME_species
                      seuratreactive$PAREACTOME <- REACTOME_species2
                      
+                     #Load
+                     seuratreactive$mincells <- mincells
+                     seuratreactive$minfeatures <- minfeatures
+                     
+                     #Load2
+                     seuratreactive$mincellsCombine <- mincellsCombine
+                     seuratreactive$minfeaturesCombine <- minfeaturesCombine
+                     
                      #QC
                      if (exists("PostQC_dataset1")) {
                        
@@ -11945,6 +12000,7 @@ server <- function(input, output, session) {
                          seuratreactive$obj <- Final_Seurat_Object
                          seuratreactive$variablefeatures <- variablefeatures
                          seuratreactive$SCTransformDR <- SCTransformDR
+                         seuratreactive$ALRAL <- ALRAL
                        }
                      }
                      
@@ -11972,6 +12028,7 @@ server <- function(input, output, session) {
                          seuratreactive$integrationreduction <- integrationreduction
                          seuratreactive$kanchor <- kanchor
                          seuratreactive$SCTransformDR2 <- SCTransformDR2
+                         seuratreactive$ALRAL2 <- ALRAL2
                        }
                      }
                      
@@ -14418,7 +14475,10 @@ server <- function(input, output, session) {
                          seuratreactive$obj_original  <- CreateSeuratObject(counts = seurat, project = input$textlabel, min.cells = input$mincells, min.features = input$minfeatures)}
                        shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                        
-                       if(any(grepl("ENS[A-Z]+00000", rownames(seuratreactive$obj_original)))){
+                       seuratreactive$mincells <- input$mincells
+                       seuratreactive$minfeatures <- input$minfeatures
+                       
+                       if(any(grepl("ENS[A-Z]+00", rownames(seuratreactive$obj_original)))){
                          shinyalert("WARNING!", "File contains Ensembl Identifiers, Calculation of mitochondrial and ribosomal expressed genes may not be accurate. Additionally, cell type annotation and pathway analysis may not be accurate.", type = "warning", confirmButtonCol = "#337ab7")
                        }
                        
@@ -14445,6 +14505,8 @@ server <- function(input, output, session) {
                        #Load2
                        seuratreactive$obj_original2 <- NULL
                        seuratreactive$matrixtable2 <- NULL
+                       seuratreactive$mincellsCombine <- NULL
+                       seuratreactive$minfeaturesCombine <- NULL
                        
                        #QC
                        seuratreactive$objQC <- NULL
@@ -14479,6 +14541,7 @@ server <- function(input, output, session) {
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
                        seuratreactive$variablefeatures <- NULL
+                       seuratreactive$ALRAL <- NULL
                        
                        
                        #DR2
@@ -14489,6 +14552,7 @@ server <- function(input, output, session) {
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
                        seuratreactive$SCTransformDR2 <- NULL
+                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
                        
@@ -14753,9 +14817,12 @@ server <- function(input, output, session) {
                        seuratreactive$matrixtable <- "yes"
                        shinyjs::show("NextButtonLoad")
                        
+                       seuratreactive$mincells <- input$mincells
+                       seuratreactive$minfeatures <- input$minfeatures
+                       
                        shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                        
-                       if(any(grepl("ENS[A-Z]+00000", rownames(seuratreactive$obj_original)))){
+                       if(any(grepl("ENS[A-Z]+00", rownames(seuratreactive$obj_original)))){
                          shinyalert("WARNING!", "File contains Ensembl Identifiers, Calculation of mitochondrial and ribosomal expressed genes may not be accurate. Additionally, cell type annotation and pathway analysis may not be accurate.", type = "warning", confirmButtonCol = "#337ab7")
                        }
                        
@@ -14782,6 +14849,8 @@ server <- function(input, output, session) {
                        #Load2
                        seuratreactive$obj_original2 <- NULL
                        seuratreactive$matrixtable2 <- NULL
+                       seuratreactive$mincellsCombine <- NULL
+                       seuratreactive$minfeaturesCombine <- NULL
                        
                        #QC
                        seuratreactive$objQC <- NULL
@@ -14816,11 +14885,11 @@ server <- function(input, output, session) {
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
                        seuratreactive$variablefeatures <- NULL
-                       
+                       seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
-                       
+                       seuratreactive$ALRAL2 <- NULL
                        seuratreactive$Combined.list <- NULL
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
@@ -15076,9 +15145,11 @@ server <- function(input, output, session) {
                        
                        seuratreactive$matrixtable <- "yes"
                        shinyjs::show("NextButtonLoad")
+                       seuratreactive$mincells <- input$mincells
+                       seuratreactive$minfeatures <- input$minfeatures
                        shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                        
-                       if(any(grepl("ENS[A-Z]+00000", rownames(seuratreactive$obj_original)))){
+                       if(any(grepl("ENS[A-Z]+00", rownames(seuratreactive$obj_original)))){
                          shinyalert("WARNING!", "File contains Ensembl Identifiers, Calculation of mitochondrial and ribosomal expressed genes may not be accurate. Additionally, cell type annotation and pathway analysis may not be accurate.", type = "warning", confirmButtonCol = "#337ab7")
                        }
                        
@@ -15105,6 +15176,8 @@ server <- function(input, output, session) {
                        #Load2
                        seuratreactive$obj_original2 <- NULL
                        seuratreactive$matrixtable2 <- NULL
+                       seuratreactive$mincellsCombine <- NULL
+                       seuratreactive$minfeaturesCombine <- NULL
                        
                        #QC
                        seuratreactive$objQC <- NULL
@@ -15139,7 +15212,7 @@ server <- function(input, output, session) {
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
                        seuratreactive$variablefeatures <- NULL
-                       
+                       seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
@@ -15148,6 +15221,7 @@ server <- function(input, output, session) {
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
+                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
                        
@@ -15388,6 +15462,9 @@ server <- function(input, output, session) {
                      seuratreactive$matrixtable <- "yes"
                      shinyjs::show("NextButtonLoad")
                      
+                     seuratreactive$mincells <- "NA"
+                     seuratreactive$minfeatures <- "NA"
+                     
                      shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                      
                      updatePrettyRadioButtons(session, "radioMEGENAselect", selected = "Cell Type Module Activity")
@@ -15404,6 +15481,8 @@ server <- function(input, output, session) {
                      #Load2
                      seuratreactive$obj_original2 <- NULL
                      seuratreactive$matrixtable2 <- NULL
+                     seuratreactive$mincellsCombine <- NULL
+                     seuratreactive$minfeaturesCombine <- NULL
                      
                      #QC
                      seuratreactive$objQC <- NULL
@@ -15438,7 +15517,7 @@ server <- function(input, output, session) {
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
                      seuratreactive$variablefeatures <- NULL
-                     
+                     seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
@@ -15447,6 +15526,7 @@ server <- function(input, output, session) {
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
+                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
                      
@@ -15679,6 +15759,9 @@ server <- function(input, output, session) {
                      seuratreactive$matrixtable <- "yes"
                      shinyjs::show("NextButtonLoad")
                      
+                     seuratreactive$mincells <- "NA"
+                     seuratreactive$minfeatures <- "NA"
+                     
                      shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                      
                      updatePrettyRadioButtons(session, "radioMEGENAselect", selected = "Cell Type Module Activity")
@@ -15692,6 +15775,8 @@ server <- function(input, output, session) {
                      #Load2
                      seuratreactive$obj_original2 <- NULL
                      seuratreactive$matrixtable2 <- NULL
+                     seuratreactive$mincellsCombine <- NULL
+                     seuratreactive$minfeaturesCombine <- NULL
                      
                      #QC
                      seuratreactive$objQC <- NULL
@@ -15726,7 +15811,7 @@ server <- function(input, output, session) {
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
                      seuratreactive$variablefeatures <- NULL
-                     
+                     seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
@@ -15735,6 +15820,7 @@ server <- function(input, output, session) {
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
+                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
                      
@@ -15967,6 +16053,9 @@ server <- function(input, output, session) {
                      seuratreactive$matrixtable <- "yes"
                      shinyjs::show("NextButtonLoad")
                      
+                     seuratreactive$mincells <- "NA"
+                     seuratreactive$minfeatures <- "NA"
+                     
                      shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                      
                      updatePrettyRadioButtons(session, "radioMEGENAselect", selected = "Cell Type Module Activity")
@@ -15980,6 +16069,8 @@ server <- function(input, output, session) {
                      #Load2
                      seuratreactive$obj_original2 <- NULL
                      seuratreactive$matrixtable2 <- NULL
+                     seuratreactive$mincellsCombine <- NULL
+                     seuratreactive$minfeaturesCombine <- NULL
                      
                      #QC
                      seuratreactive$objQC <- NULL
@@ -16014,7 +16105,7 @@ server <- function(input, output, session) {
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
                      seuratreactive$variablefeatures <- NULL
-                     
+                     seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
@@ -16023,6 +16114,7 @@ server <- function(input, output, session) {
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
+                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
                      
@@ -16255,6 +16347,9 @@ server <- function(input, output, session) {
                      seuratreactive$matrixtable <- "yes"
                      shinyjs::show("NextButtonLoad")
                      
+                     seuratreactive$mincells <- "NA"
+                     seuratreactive$minfeatures <- "NA"
+                     
                      shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                      
                      updatePrettyRadioButtons(session, "radioMEGENAselect", selected = "Cell Type Module Activity")
@@ -16268,6 +16363,8 @@ server <- function(input, output, session) {
                      #Load2
                      seuratreactive$obj_original2 <- NULL
                      seuratreactive$matrixtable2 <- NULL
+                     seuratreactive$mincellsCombine <- NULL
+                     seuratreactive$minfeaturesCombine <- NULL
                      
                      #QC
                      seuratreactive$objQC <- NULL
@@ -16302,7 +16399,7 @@ server <- function(input, output, session) {
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
                      seuratreactive$variablefeatures <- NULL
-                     
+                     seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
@@ -16311,6 +16408,7 @@ server <- function(input, output, session) {
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
+                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
                      
@@ -16563,7 +16661,7 @@ server <- function(input, output, session) {
                        incProgress(0.8)
                        shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                        
-                       if(any(grepl("ENS[A-Z]+00000", rownames(seuratreactive$obj_original)))){
+                       if(any(grepl("ENS[A-Z]+00", rownames(seuratreactive$obj_original)))){
                          shinyalert("WARNING!", "File contains Ensembl Identifiers, Calculation of mitochondrial and ribosomal expressed genes may not be accurate. Additionally, cell type annotation and pathway analysis may not be accurate.", type = "warning", confirmButtonCol = "#337ab7")
                        }
                        
@@ -16590,6 +16688,8 @@ server <- function(input, output, session) {
                        #Load2
                        seuratreactive$obj_original2 <- NULL
                        seuratreactive$matrixtable2 <- NULL
+                       seuratreactive$mincellsCombine <- NULL
+                       seuratreactive$minfeaturesCombine <- NULL
                        
                        #QC
                        seuratreactive$objQC <- NULL
@@ -16624,7 +16724,7 @@ server <- function(input, output, session) {
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
                        seuratreactive$variablefeatures <- NULL
-                       
+                       seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
@@ -16633,6 +16733,7 @@ server <- function(input, output, session) {
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
+                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
                        
@@ -16888,7 +16989,7 @@ server <- function(input, output, session) {
                        
                        shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                        
-                       if(any(grepl("ENS[A-Z]+00000", rownames(seuratreactive$obj_original)))){
+                       if(any(grepl("ENS[A-Z]+00", rownames(seuratreactive$obj_original)))){
                          shinyalert("WARNING!", "File contains Ensembl Identifiers, Calculation of mitochondrial and ribosomal expressed genes may not be accurate. Additionally, cell type annotation and pathway analysis may not be accurate.", type = "warning", confirmButtonCol = "#337ab7")
                        }
                        
@@ -16915,6 +17016,8 @@ server <- function(input, output, session) {
                        #Load2
                        seuratreactive$obj_original2 <- NULL
                        seuratreactive$matrixtable2 <- NULL
+                       seuratreactive$mincellsCombine <- NULL
+                       seuratreactive$minfeaturesCombine <- NULL
                        
                        #QC
                        seuratreactive$objQC <- NULL
@@ -16949,7 +17052,7 @@ server <- function(input, output, session) {
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
                        seuratreactive$variablefeatures <- NULL
-                       
+                       seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
@@ -16958,6 +17061,7 @@ server <- function(input, output, session) {
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
+                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
                        
@@ -17207,6 +17311,8 @@ server <- function(input, output, session) {
                      #Load2
                      seuratreactive$obj_original2 <- NULL
                      seuratreactive$matrixtable2 <- NULL
+                     seuratreactive$mincellsCombine <- NULL
+                     seuratreactive$minfeaturesCombine <- NULL
                      
                      #QC
                      seuratreactive$objQC <- NULL
@@ -17241,7 +17347,7 @@ server <- function(input, output, session) {
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
                      seuratreactive$variablefeatures <- NULL
-                     
+                     seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
@@ -17250,6 +17356,7 @@ server <- function(input, output, session) {
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
+                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
                      
@@ -17659,10 +17766,12 @@ server <- function(input, output, session) {
                        seuratreactive$matrixtable2 <- "yes"
                        shinyjs::show("NextButtonCombine")
                        seuratreactive$type2 <- "single"
+                       seuratreactive$mincellsCombine <- input$mincellsCombine
+                       seuratreactive$minfeaturesCombine <- input$minfeaturesCombine
                        
                        shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                        
-                       if(any(grepl("ENS[A-Z]+00000", rownames(seuratreactive$obj_original2)))){
+                       if(any(grepl("ENS[A-Z]+00", rownames(seuratreactive$obj_original2)))){
                          shinyalert("WARNING!", "File contains Ensembl Identifiers, Calculation of mitochondrial and ribosomal expressed genes may not be accurate. Additionally, cell type annotation and pathway analysis may not be accurate.", type = "warning", confirmButtonCol = "#337ab7")
                        }
                        
@@ -17701,7 +17810,7 @@ server <- function(input, output, session) {
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
                        seuratreactive$variablefeatures <- NULL
-                       
+                       seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
@@ -17710,6 +17819,7 @@ server <- function(input, output, session) {
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
+                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
                        
@@ -17982,9 +18092,12 @@ server <- function(input, output, session) {
                        seuratreactive$type2 <- "single"
                        shinyjs::show("NextButtonCombine")
                        
+                       seuratreactive$mincellsCombine <- input$mincellsCombine
+                       seuratreactive$minfeaturesCombine <- input$minfeaturesCombine
+                       
                        shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                        
-                       if(any(grepl("ENS[A-Z]+00000", rownames(seuratreactive$obj_original2)))){
+                       if(any(grepl("ENS[A-Z]+00", rownames(seuratreactive$obj_original2)))){
                          shinyalert("WARNING!", "File contains Ensembl Identifiers, Calculation of mitochondrial and ribosomal expressed genes may not be accurate. Additionally, cell type annotation and pathway analysis may not be accurate.", type = "warning", confirmButtonCol = "#337ab7")
                        }
                        
@@ -18023,7 +18136,7 @@ server <- function(input, output, session) {
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
                        seuratreactive$variablefeatures <- NULL
-                       
+                       seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
@@ -18032,6 +18145,7 @@ server <- function(input, output, session) {
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
+                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
                        
@@ -18292,9 +18406,12 @@ server <- function(input, output, session) {
                        seuratreactive$type2 <- "single"
                        shinyjs::show("NextButtonCombine")
                        
+                       seuratreactive$mincellsCombine <- input$mincellsCombine
+                       seuratreactive$minfeaturesCombine <- input$minfeaturesCombine
+                       
                        shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                        
-                       if(any(grepl("ENS[A-Z]+00000", rownames(seuratreactive$obj_original2)))){
+                       if(any(grepl("ENS[A-Z]+00", rownames(seuratreactive$obj_original2)))){
                          shinyalert("WARNING!", "File contains Ensembl Identifiers, Calculation of mitochondrial and ribosomal expressed genes may not be accurate. Additionally, cell type annotation and pathway analysis may not be accurate.", type = "warning", confirmButtonCol = "#337ab7")
                        }
                        
@@ -18333,7 +18450,7 @@ server <- function(input, output, session) {
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
                        seuratreactive$variablefeatures <- NULL
-                       
+                       seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
@@ -18342,6 +18459,7 @@ server <- function(input, output, session) {
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
+                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
                        
@@ -18589,6 +18707,8 @@ server <- function(input, output, session) {
                      seuratreactive$type2 <- "single"
                      seuratreactive$matrixtable2 <- "yes"
                      shinyjs::show("NextButtonCombine")
+                     seuratreactive$mincellsCombine <- "NA"
+                     seuratreactive$minfeaturesCombine <- "NA"
                      
                      shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                      
@@ -18615,7 +18735,7 @@ server <- function(input, output, session) {
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
                      seuratreactive$variablefeatures <- NULL
-                     
+                     seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
@@ -18624,6 +18744,7 @@ server <- function(input, output, session) {
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
+                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
                      
@@ -18865,6 +18986,9 @@ server <- function(input, output, session) {
                      seuratreactive$matrixtable2 <- "yes"
                      shinyjs::show("NextButtonCombine")
                      
+                     seuratreactive$mincellsCombine <- "NA"
+                     seuratreactive$minfeaturesCombine <- "NA"
+                     
                      shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                      
                      updatePrettyRadioButtons(session, "radioMEGENAselect", selected = "Cell Type Module Activity")
@@ -18890,7 +19014,7 @@ server <- function(input, output, session) {
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
                      seuratreactive$variablefeatures <- NULL
-                     
+                     seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
@@ -18899,6 +19023,7 @@ server <- function(input, output, session) {
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
+                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
                      
@@ -19140,6 +19265,9 @@ server <- function(input, output, session) {
                      seuratreactive$matrixtable2 <- "yes"
                      shinyjs::show("NextButtonCombine")
                      
+                     seuratreactive$mincellsCombine <- "NA"
+                     seuratreactive$minfeaturesCombine <- "NA"
+                     
                      shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                      
                      updatePrettyRadioButtons(session, "radioMEGENAselect", selected = "Cell Type Module Activity")
@@ -19165,7 +19293,7 @@ server <- function(input, output, session) {
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
                      seuratreactive$variablefeatures <- NULL
-                     
+                     seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
@@ -19174,6 +19302,7 @@ server <- function(input, output, session) {
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
+                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
                      
@@ -19415,6 +19544,9 @@ server <- function(input, output, session) {
                      seuratreactive$matrixtable2 <- "yes"
                      shinyjs::show("NextButtonCombine")
                      
+                     seuratreactive$mincellsCombine <- "NA"
+                     seuratreactive$minfeaturesCombine <- "NA"
+                     
                      shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                      
                      updatePrettyRadioButtons(session, "radioMEGENAselect", selected = "Cell Type Module Activity")
@@ -19440,7 +19572,7 @@ server <- function(input, output, session) {
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
                      seuratreactive$variablefeatures <- NULL
-                     
+                     seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
@@ -19449,6 +19581,7 @@ server <- function(input, output, session) {
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
+                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
                      
@@ -19707,7 +19840,7 @@ server <- function(input, output, session) {
                        
                        shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                        
-                       if(any(grepl("ENS[A-Z]+00000", rownames(seuratreactive$obj_original2)))){
+                       if(any(grepl("ENS[A-Z]+00", rownames(seuratreactive$obj_original2)))){
                          shinyalert("WARNING!", "File contains Ensembl Identifiers, Calculation of mitochondrial and ribosomal expressed genes may not be accurate. Additionally, cell type annotation and pathway analysis may not be accurate.", type = "warning", confirmButtonCol = "#337ab7")
                        }
                        
@@ -19746,7 +19879,7 @@ server <- function(input, output, session) {
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
                        seuratreactive$variablefeatures <- NULL
-                       
+                       seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
@@ -19755,6 +19888,7 @@ server <- function(input, output, session) {
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
+                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
                        
@@ -20015,7 +20149,7 @@ server <- function(input, output, session) {
                        shinyjs::show("NextButtonCombine")
                        shinyalert("SUCCESS!", "File uploaded successfully.", type = "success", confirmButtonCol = "#337ab7")
                        
-                       if(any(grepl("ENS[A-Z]+00000", rownames(seuratreactive$obj_original2)))){
+                       if(any(grepl("ENS[A-Z]+00", rownames(seuratreactive$obj_original2)))){
                          shinyalert("WARNING!", "File contains Ensembl Identifiers, Calculation of mitochondrial and ribosomal expressed genes may not be accurate. Additionally, cell type annotation and pathway analysis may not be accurate.", type = "warning", confirmButtonCol = "#337ab7")
                        }
                        
@@ -20054,7 +20188,7 @@ server <- function(input, output, session) {
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
                        seuratreactive$variablefeatures <- NULL
-                       
+                       seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
@@ -20063,6 +20197,7 @@ server <- function(input, output, session) {
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
+                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
                        
@@ -20333,7 +20468,7 @@ server <- function(input, output, session) {
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
                      seuratreactive$variablefeatures <- NULL
-                     
+                     seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
@@ -20342,6 +20477,7 @@ server <- function(input, output, session) {
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
+                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
                      
@@ -20707,7 +20843,8 @@ server <- function(input, output, session) {
   output$plot <- renderPlot({
     validate(
       need(!is.null(seuratreactive$objQC), "You must complete the quality control step"))
-    VlnPlot(seuratreactive$objQC, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"), group.by = "orig.ident", pt.size = 2, ncol = 2)})
+    VlnPlot(seuratreactive$objQC, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"), group.by = "orig.ident", pt.size = input$sizeQC, ncol = 2) 
+    })
   
   output$plot2 <- renderPlot({
     validate(
@@ -20749,6 +20886,8 @@ server <- function(input, output, session) {
       #Load2
       seuratreactive$obj_original2 <- NULL
       seuratreactive$matrixtable2 <- NULL
+      seuratreactive$mincellsCombine <- NULL
+      seuratreactive$minfeaturesCombine <- NULL
       
       #QC2
       seuratreactive$type2 <- NULL
@@ -20772,7 +20911,7 @@ server <- function(input, output, session) {
       seuratreactive$obj <- NULL
       seuratreactive$SCTransformDR <- NULL
       seuratreactive$variablefeatures <- NULL
-      
+      seuratreactive$ALRAL <- NULL
       
       #DR2
       seuratreactive$obj <- NULL
@@ -20781,6 +20920,7 @@ server <- function(input, output, session) {
       seuratreactive$VFintegrated <- NULL
       seuratreactive$integrationreduction <- NULL
       seuratreactive$kanchor <- NULL
+      seuratreactive$ALRAL2 <- NULL
       
       #C
       
@@ -21274,6 +21414,8 @@ server <- function(input, output, session) {
     #Load2
     seuratreactive$obj_original2 <- NULL
     seuratreactive$matrixtable2 <- NULL
+    seuratreactive$mincellsCombine <- NULL
+    seuratreactive$minfeaturesCombine <- NULL
     
     #QC2
     seuratreactive$type2 <- NULL
@@ -21297,7 +21439,7 @@ server <- function(input, output, session) {
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR <- NULL
     seuratreactive$variablefeatures <- NULL
-    
+    seuratreactive$ALRAL <- NULL
     
     #DR2
     seuratreactive$obj <- NULL
@@ -21306,6 +21448,7 @@ server <- function(input, output, session) {
     seuratreactive$VFintegrated <- NULL
     seuratreactive$integrationreduction <- NULL
     seuratreactive$kanchor <- NULL
+    seuratreactive$ALRAL2 <- NULL
     
     #C
     
@@ -21571,6 +21714,8 @@ server <- function(input, output, session) {
     #Load2
     seuratreactive$obj_original2 <- NULL
     seuratreactive$matrixtable2 <- NULL
+    seuratreactive$mincellsCombine <- NULL
+    seuratreactive$minfeaturesCombine <- NULL
     
     #QC2
     seuratreactive$type2 <- NULL
@@ -21594,7 +21739,7 @@ server <- function(input, output, session) {
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR <- NULL
     seuratreactive$variablefeatures <- NULL
-    
+    seuratreactive$ALRAL <- NULL
     
     #DR2
     seuratreactive$obj <- NULL
@@ -21603,6 +21748,7 @@ server <- function(input, output, session) {
     seuratreactive$VFintegrated <- NULL
     seuratreactive$integrationreduction <- NULL
     seuratreactive$kanchor <- NULL
+    seuratreactive$ALRAL2 <- NULL
     
     #C
     
@@ -21852,6 +21998,8 @@ server <- function(input, output, session) {
     #Load2
     seuratreactive$obj_original2 <- NULL
     seuratreactive$matrixtable2 <- NULL
+    seuratreactive$mincellsCombine <- NULL
+    seuratreactive$minfeaturesCombine <- NULL
     
     #QC2
     seuratreactive$type2 <- NULL
@@ -21875,7 +22023,7 @@ server <- function(input, output, session) {
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR <- NULL
     seuratreactive$variablefeatures <- NULL
-    
+    seuratreactive$ALRAL <- NULL
     
     #DR2
     seuratreactive$obj <- NULL
@@ -21884,6 +22032,7 @@ server <- function(input, output, session) {
     seuratreactive$VFintegrated <- NULL
     seuratreactive$integrationreduction <- NULL
     seuratreactive$kanchor <- NULL
+    seuratreactive$ALRAL2 <- NULL
     
     #C
     
@@ -22227,7 +22376,8 @@ server <- function(input, output, session) {
   output$plotCombine <- renderPlot({
     validate(
       need(!is.null(seuratreactive$objQC2), "You must complete the quality control step"))
-    VlnPlot(seuratreactive$objQC2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"), group.by = "orig.ident", pt.size = 2, ncol = 2)})
+    VlnPlot(seuratreactive$objQC2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"), group.by = "orig.ident", pt.size = input$sizeQC2, ncol = 2)
+  })
   
   output$plot2Combine <- renderPlot({
     validate(
@@ -22269,7 +22419,7 @@ server <- function(input, output, session) {
       seuratreactive$obj <- NULL
       seuratreactive$SCTransformDR <- NULL
       seuratreactive$variablefeatures <- NULL
-      
+      seuratreactive$ALRAL <- NULL
       
       #DR2
       seuratreactive$obj <- NULL
@@ -22278,6 +22428,7 @@ server <- function(input, output, session) {
       seuratreactive$VFintegrated <- NULL
       seuratreactive$integrationreduction <- NULL
       seuratreactive$kanchor <- NULL
+      seuratreactive$ALRAL2 <- NULL
       
       #C
       
@@ -22793,7 +22944,7 @@ server <- function(input, output, session) {
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR <- NULL
     seuratreactive$variablefeatures <- NULL
-    
+    seuratreactive$ALRAL <- NULL
     
     #DR2
     seuratreactive$obj <- NULL
@@ -22802,6 +22953,7 @@ server <- function(input, output, session) {
     seuratreactive$VFintegrated <- NULL
     seuratreactive$integrationreduction <- NULL
     seuratreactive$kanchor <- NULL
+    seuratreactive$ALRAL2 <- NULL
     
     #C
     
@@ -23023,7 +23175,7 @@ server <- function(input, output, session) {
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR <- NULL
     seuratreactive$variablefeatures <- NULL
-    
+    seuratreactive$ALRAL <- NULL
     
     #DR2
     seuratreactive$obj <- NULL
@@ -23032,6 +23184,7 @@ server <- function(input, output, session) {
     seuratreactive$VFintegrated <- NULL
     seuratreactive$integrationreduction <- NULL
     seuratreactive$kanchor <- NULL
+    seuratreactive$ALRAL2 <- NULL
     
     #C
     
@@ -23313,6 +23466,8 @@ server <- function(input, output, session) {
       numericInput("variablefeatures", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Number of Variable Features')), 
                    value = 2000, step = 100,
                    width = "100%"),
+      materialSwitch("ALRAL", label = h4(HTML('<h4 style = "text-align:justify;color:#000000">Impute dropouts (<a href="https://www.nature.com/articles/s41467-021-27729-z" target="_blank">ALRA method</a>) <br> *NOTE this will increase computational time')),
+                     value = FALSE, status = "primary", width = "100%"),
       p(style="text-align: center;", actionBttn("startbuttonDR", "APPLY", size = "lg")),
       
       h4(HTML('<h4 style = "text-align:justify"> Please note that this step is computationally intensive and could take upwards of 30 minutes to complete depending on the size of the dataset(s).')),
@@ -23328,13 +23483,11 @@ server <- function(input, output, session) {
     
     if (!is.null(input$SCTransformDR)) {
       if (input$SCTransformDR == "SCTransform") {
-        updateNumericInput(session, "variablefeatures", value = 3000)
         updateNumericInput(session, "integera", value = 25)
         updateNumericInput(session, "integere", value = 25)
         updateNumericInput(session, "tsne1", value = 25)
       }
       else if (input$SCTransformDR == "LogNormalize") {
-        updateNumericInput(session, "variablefeatures", value = 2000)
         updateNumericInput(session, "integera", value = 15)
         updateNumericInput(session, "integere", value = 15)
         updateNumericInput(session, "tsne1", value = 15)
@@ -23352,21 +23505,6 @@ server <- function(input, output, session) {
   })
   
   observe({
-    if (!is.null(input$SCTransformDR)) {
-      if (input$SCTransformDR == "SCTransform") {
-        updateNumericInput(session, "variablefeatures", value = 3000)
-        updateNumericInput(session, "integera", value = 25)
-        updateNumericInput(session, "integere", value = 25)
-        updateNumericInput(session, "tsne1", value = 25)
-      }
-      else if (input$SCTransformDR == "LogNormalize") {
-        updateNumericInput(session, "variablefeatures", value = 2000)
-        updateNumericInput(session, "integera", value = 15)
-        updateNumericInput(session, "integere", value = 15)
-        updateNumericInput(session, "tsne1", value = 15)
-      }
-    }
-    
     if (!is.null(input$variablefeatures)) {
       if (is.na(input$variablefeatures)) {
         shinyjs::disable("startbuttonDR")
@@ -23383,6 +23521,8 @@ server <- function(input, output, session) {
                    value = 0, {
                      incProgress(1/20)
                      
+                     removeModal()
+                     
                      if (input$SCTransformDR == "LogNormalize") {
                        seuratreactive$obj <- FindVariableFeatures(seuratreactive$objQC, selection.method = "vst", nfeatures = input$variablefeatures)
                        
@@ -23393,10 +23533,39 @@ server <- function(input, output, session) {
                        incProgress(6/20)
                        #Data scaling
                        seuratreactive$obj <- ScaleData(seuratreactive$obj)
+                       
+                       if (input$ALRAL == TRUE) {
+                         seuratreactive$ALRA <- "yes"
+                         seuratreactive$obj <- RunALRA(seuratreactive$obj)
+                         
+                         seuratreactive$obj@assays$RNA@data <- seuratreactive$obj@assays$alra@data
+                         
+                         DefaultAssay(seuratreactive$obj) <- "RNA"
+                         
+                         seuratreactive$obj[['alra']] <- NULL
+                       }
+                       else {
+                         seuratreactive$ALRA <- "no"
+                       }
+                       
                        incProgress(9/20)
                      }
                      else {
                        seuratreactive$obj <- SCTransform(seuratreactive$objQC, method = "glmGamPoi", variable.features.n = input$variablefeatures, vst.flavor = "v2")
+                       
+                       if (input$ALRAL == TRUE) {
+                         seuratreactive$ALRA <- "yes"
+                         seuratreactive$obj <- RunALRA(seuratreactive$obj)
+                         
+                         seuratreactive$obj@assays$SCT@data <- seuratreactive$obj@assays$alra@data
+                         
+                         DefaultAssay(seuratreactive$obj) <- "SCT"
+                         
+                         seuratreactive$obj[['alra']] <- NULL
+                       }
+                       else {
+                         seuratreactive$ALRA <- "no"
+                       }
                      }
                      #Dimensionality reduction
                      seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
@@ -23417,11 +23586,11 @@ server <- function(input, output, session) {
                      shinyjs::enable("startbuttonC")
                      shinyjs::hide("NextButtonC")
                      
+                     if (!is.null(seuratreactive$obj)) {
                      shinyjs::show("NextButtonDR")
+                     }
                      
                      shinyjs::hide("NextButtonCombine")
-                     
-                     removeModal()
                      
                    })
     },
@@ -23465,7 +23634,9 @@ server <- function(input, output, session) {
     shinyjs::enable("startbuttonC")
     shinyjs::hide("NextButtonC")
     
-    shinyjs::show("NextButtonDR")
+    if (!is.null(seuratreactive$obj)) {
+      shinyjs::show("NextButtonDR")
+    }
     
     shinyjs::hide("NextButtonCombine")
     
@@ -23477,6 +23648,7 @@ server <- function(input, output, session) {
     seuratreactive$integrationreduction <- NULL
     seuratreactive$kanchor <- NULL
     seuratreactive$SCTransformDR2 <- NULL
+    seuratreactive$ALRAL2 <- NULL
     
     #C
     
@@ -23811,6 +23983,8 @@ server <- function(input, output, session) {
                    value = 5,
                    min = 1, max = 50, step = 1,
                    width = "100%"),
+      materialSwitch("ALRAL2", label = h4(HTML('<h4 style = "text-align:justify;color:#000000">Impute dropouts (<a href="https://www.nature.com/articles/s41467-021-27729-z" target="_blank">ALRA method</a>) <br> *NOTE this will increase computational time')),
+                     value = FALSE, status = "primary", width = "100%"),
       p(style="text-align: center;", actionBttn("startbuttonDR2", "INTEGRATE", size = "lg")),
       
       h4(HTML('<h4 style = "text-align:justify"> Please note that this step is computationally intensive and could take upwards of 30 minutes to complete depending on the size of the dataset(s).')),
@@ -23827,13 +24001,11 @@ server <- function(input, output, session) {
     
     if (!is.null(input$SCTransformDR2)) {
       if (input$SCTransformDR2 == "SCTransform") {
-        updateNumericInput(session, "VFintegrated", value = 3000)
         updateNumericInput(session, "integera", value = 25)
         updateNumericInput(session, "integere", value = 25)
         updateNumericInput(session, "tsne1", value = 25)
       }
       else if (input$SCTransformDR2 == "LogNormalize") {
-        updateNumericInput(session, "VFintegrated", value = 2000)
         updateNumericInput(session, "integera", value = 15)
         updateNumericInput(session, "integere", value = 15)
         updateNumericInput(session, "tsne1", value = 15)
@@ -23863,13 +24035,11 @@ server <- function(input, output, session) {
   observe({
     if (!is.null(input$SCTransformDR2)) {
       if (input$SCTransformDR2 == "SCTransform") {
-        updateNumericInput(session, "VFintegrated", value = 3000)
         updateNumericInput(session, "integera", value = 25)
         updateNumericInput(session, "integere", value = 25)
         updateNumericInput(session, "tsne1", value = 25)
       }
       else if (input$SCTransformDR2 == "LogNormalize") {
-        updateNumericInput(session, "VFintegrated", value = 2000)
         updateNumericInput(session, "integera", value = 15)
         updateNumericInput(session, "integere", value = 15)
         updateNumericInput(session, "tsne1", value = 15)
@@ -23897,10 +24067,12 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$startbuttonDR2, {
-    tryCatch({
+    #tryCatch({
       withProgress(message = 'Performing Dimensionality Reduction. Please wait...',
                    value = 0, {
                      incProgress(1/20)
+                     
+                     removeModal()
                      
                      if (!is.null(seuratreactive$objQC2)) {
                        Combined <- merge(seuratreactive$objQC, seuratreactive$objQC2)
@@ -23930,10 +24102,26 @@ server <- function(input, output, session) {
                          # select features that are repeatedly variable across datasets for integration
                          features <- SelectIntegrationFeatures(object.list = seuratreactive$Combined.list)
                          
-                         seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
-                           x <- ScaleData(x, features = features)
-                           x <- RunPCA(x, features = features, npcs = 100)
-                         })
+                         if (input$ALRAL2 == TRUE) {
+                           seuratreactive$ALRAL2 <- "yes"
+                           
+                           seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
+                             x <- ScaleData(x, features = features)
+                             x <- RunALRA(x)
+                             x@assays$RNA@data <- x@assays$alra@data
+                             DefaultAssay(x) <- "RNA"
+                             x[['alra']] <- NULL
+                             x <- RunPCA(x, features = features, npcs = 100)
+                           })
+                         }
+                         else {
+                           seuratreactive$ALRAL2 <- "no"
+                           seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
+                             x <- ScaleData(x, features = features)
+                             x <- RunPCA(x, features = features, npcs = 100)
+                           })
+                         }
+
                          incProgress(10/20)
                          
                          #Perform integration
@@ -23968,7 +24156,32 @@ server <- function(input, output, session) {
                          
                          Combined <- ScaleData(Combined)
                          
+                         Combined.list <- SplitObject(Combined, split.by = "orig.ident")
+                         
+                         if (input$ALRAL2 == TRUE) {
+                           seuratreactive$ALRAL2 <- "yes"
+                           
+                           Combined.list <- lapply(Combined.list, FUN = function(x) {
+                             x <- RunALRA(x)
+                             x@assays$RNA@data <- x@assays$alra@data
+                             DefaultAssay(x) <- "RNA"
+                             x[['alra']] <- NULL
+                             x <- RunPCA(x, npcs = 100)
+                           })
+                         }
+                         else {
+                           seuratreactive$ALRAL2 <- "no"
+                         }
+                         
+                         Combined <- Merge_Seurat_List(Combined.list)
+                         
                          incProgress(10/20)
+                         
+                         Combined <- NormalizeData(Combined)
+                         
+                         Combined <- FindVariableFeatures(Combined, selection.method = "vst", nfeatures = input$VFintegrated)
+                         
+                         Combined <- ScaleData(Combined)
                          
                          Combined <- RunPCA(Combined, npcs = 100)
                          
@@ -23985,11 +24198,26 @@ server <- function(input, output, session) {
                      }
                      else if (input$SCTransformDR2 == "SCTransform") {
                        
-                       seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
-                         x <- SCTransform(x, method = "glmGamPoi", variable.features.n = input$VFintegrated, vst.flavor = "v2")
-                         x <- RunPCA(x, npcs = 100)
-                       })
-                       
+                       if (input$ALRAL2 == TRUE) {
+                         seuratreactive$ALRAL2 <- "yes"
+                         
+                         seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
+                           x <- SCTransform(x, method = "glmGamPoi", variable.features.n = input$VFintegrated, vst.flavor = "v2")
+                           x <- RunALRA(x)
+                           x@assays$SCT@data <- x@assays$alra@data
+                           DefaultAssay(x) <- "SCT"
+                           x[['alra']] <- NULL
+                           x <- RunPCA(x, npcs = 100)
+                         })
+                       }
+                       else {
+                         seuratreactive$ALRAL2 <- "no"
+                         seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
+                           x <- SCTransform(x, method = "glmGamPoi", variable.features.n = input$VFintegrated, vst.flavor = "v2")
+                           x <- RunPCA(x, npcs = 100)
+                         })
+                       }
+
                        incProgress(7/20)
                        
                        if (input$integrationreduction == "rpca" | input$integrationreduction == "cca") {
@@ -24028,7 +24256,28 @@ server <- function(input, output, session) {
                          
                          Combined <- SCTransform(Combined, method = "glmGamPoi", variable.features.n = input$VFintegrated, vst.flavor = "v2")
                          
+                         Combined.list <- SplitObject(Combined, split.by = "orig.ident")
+                         
+                         if (input$ALRAL2 == TRUE) {
+                           seuratreactive$ALRAL2 <- "yes"
+                           
+                           Combined.list <- lapply(Combined.list, FUN = function(x) {
+                             x <- RunALRA(x)
+                             x@assays$SCT@data <- x@assays$alra@data
+                             DefaultAssay(x) <- "SCT"
+                             x[['alra']] <- NULL
+                             x <- RunPCA(x, npcs = 100)
+                           })
+                         }
+                         else {
+                           seuratreactive$ALRAL2 <- "no"
+                         }
+                         
+                         Combined <- Merge_Seurat_List(Combined.list)
+                         
                          incProgress(10/20)
+                         
+                         Combined <- SCTransform(Combined, method = "glmGamPoi", variable.features.n = input$VFintegrated, vst.flavor = "v2")
                          
                          Combined <- RunPCA(Combined, npcs = 100)
                          
@@ -24054,8 +24303,6 @@ server <- function(input, output, session) {
                      
                      incProgress(20/20)
                      
-                     removeModal()
-                     
                      js$collapse("DRBoxIntro2")
                      shinyjs::show("DRBox1DR2")
                      shinyjs::show("DRBox2DR2")
@@ -24066,15 +24313,17 @@ server <- function(input, output, session) {
                      shinyjs::enable("startbuttonC")
                      shinyjs::hide("NextButtonC")
                      
-                     shinyjs::show("NextButtonDR2")
+                     if (!is.null(seuratreactive$obj)) {
+                       shinyjs::show("NextButtonDR2")
+                     }
                      
                      shinyjs::hide("NextButtonCombine")
                      shinyjs::hide("NextButtonD2")
                    })
-    },
-    error = function(e) {
-      shinyalert("ERROR!", "You may not have enough similarity between the two datasets to perform the integration. Please also check the number of variable features that are incorporated.", type = "error", confirmButtonCol = "#337ab7")
-    })
+    # },
+    # error = function(e) {
+    #   shinyalert("ERROR!", "You may not have enough similarity between the two datasets to perform the integration. Please also check the number of variable features that are incorporated.", type = "error", confirmButtonCol = "#337ab7")
+    # })
   }, ignoreInit = T)
   
   output$DR2VF1 <- renderPlot({
@@ -24125,6 +24374,7 @@ server <- function(input, output, session) {
       #DR
       seuratreactive$variablefeatures <- NULL
       seuratreactive$SCTransformDR <- NULL
+      seuratreactive$ALRAL <- NULL
       
       #C
       seuratreactive$integera <- NULL
@@ -24329,7 +24579,9 @@ server <- function(input, output, session) {
       shinyjs::enable("startbuttonC")
       shinyjs::hide("NextButtonC")
       
-      shinyjs::show("NextButtonDR2")
+      if (!is.null(seuratreactive$obj)) {
+        shinyjs::show("NextButtonDR2")
+      }
       
       shinyjs::hide("NextButtonCombine")
       shinyjs::hide("NextButtonD2")
@@ -25642,7 +25894,8 @@ server <- function(input, output, session) {
                               selected = seuratreactive$reductionCC2)
         }
       }
-      else if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "LogNormalize" | 
+      else if (!is.null(seuratreactive$variablefeatures)) {
+      if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "LogNormalize" | 
                !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "LogNormalize") {
         updateVirtualSelect('CC2', choices = c(seuratreactive$obj[["RNA"]]@var.features), 
                             selected = seuratreactive$reductionCC2)
@@ -25650,6 +25903,7 @@ server <- function(input, output, session) {
       else {
         updateVirtualSelect('CC2', choices = c(seuratreactive$obj[["SCT"]]@var.features), 
                             selected = seuratreactive$reductionCC2)
+      }
       }
     }
   })
@@ -28905,6 +29159,8 @@ server <- function(input, output, session) {
                    value = 0, {
                      incProgress(1/20)
                      
+                     removeModal()
+                     
                      if (input$MEGENA_selectmethod == "Variable Genes") {
                      #Find variable features
                      
@@ -29073,8 +29329,6 @@ server <- function(input, output, session) {
                        
                        seuratreactive$MEGENA_selectmethod <- input$MEGENA_selectmethod
                        
-                       removeModal()
-                       
                        if (input$iscollapseboxMEGENA == FALSE) {
                          js$collapse("MEGENABoxIntro")
                        }
@@ -29221,6 +29475,8 @@ server <- function(input, output, session) {
                    value = 0, {
                      incProgress(1/10)
                      
+                     removeModal()
+                     
                      modules <- melt(seuratreactive$summary.output$modules)
                      modules$L1 <- sub("_", ".", modules$L1)
                      
@@ -29240,8 +29496,6 @@ server <- function(input, output, session) {
                      seuratreactive$moduleGO_df = extractModuleGO(moduleGO_res, labels = unique(modules$L1))
                      
                      incProgress(10/10)
-                     
-                     removeModal()
                    })
     },
     error = function(e) {
@@ -29867,6 +30121,8 @@ server <- function(input, output, session) {
                    value = 0, {
                      incProgress(1/10)
                      
+                     removeModal()
+                     
                      seuratreactive$variablefeaturesSCENIC <- NULL
                      seuratreactive$variablegenesSCENIC <- NULL
                      seuratreactive$regulonAUC <- NULL
@@ -30009,8 +30265,6 @@ server <- function(input, output, session) {
                      
                      
                      incProgress(10/10)
-                     
-                     removeModal()
                      
                      updateVirtualSelect('SCENICInput', choices = c("Please select from the following" = "", rownames(seuratreactive$regulonnames)))
                      
@@ -30779,6 +31033,8 @@ server <- function(input, output, session) {
                  value = 0, {
                    incProgress(1/10)
                    
+                   removeModal()
+                   
                    source("MAGMA_fixpath.R")
                    source("MAGMA_getos.R")
                    source("MAGMA_messageparallel.R")
@@ -30900,9 +31156,7 @@ server <- function(input, output, session) {
                    seuratreactive$MAGMA_Final_Results <- na.omit(seuratreactive$MAGMA_Final_Results)
                    
                    incProgress(10/10)
-                   
-                   removeModal()
-                   
+
                    if (!is.null(seuratreactive$genesOutPath2)) {
                      seuratreactive$MAGMA_samples <- input$MAGMA_samples
                      seuratreactive$MAGMA_GWAS <- input$MAGMA_GWAS
@@ -30945,6 +31199,8 @@ server <- function(input, output, session) {
       withProgress(message = 'Please wait...',
                    value = 0, {
                      incProgress(1/10)
+                     
+                     removeModal()
                      
                      source("MAGMA_fixpath.R")
                      source("MAGMA_getos.R")
@@ -31105,8 +31361,6 @@ server <- function(input, output, session) {
                      seuratreactive$MAGMA_Final_Results <- na.omit(seuratreactive$MAGMA_Final_Results)
                      
                      incProgress(10/10)
-                     
-                     removeModal()
                      
                      if (!is.null(seuratreactive$magma_dirs)) {
                        seuratreactive$MAGMA_samples2 <- input$MAGMA_samples2
@@ -31713,6 +31967,9 @@ server <- function(input, output, session) {
       withProgress(message = 'Calculating ...',
                    value = 0, {
                      incProgress(1/10)
+                     
+                     removeModal()
+                     
                      seuratreactive$Monocle3_genes <- graph_test(seuratreactive$seurat_monocle, neighbor_graph="principal_graph", cores=8)
                      
                      incProgress(9/10)
@@ -31721,7 +31978,6 @@ server <- function(input, output, session) {
                      incProgress(10/10)
                      seuratreactive$Monocle3_genes <- tibble::rownames_to_column(seuratreactive$Monocle3_genes, "Gene Name")
                      
-                     removeModal()
                    })
     },
     error = function(e) {
@@ -32381,6 +32637,8 @@ server <- function(input, output, session) {
                    value = 0, {
                      incProgress(1/20)
                      
+                     removeModal()
+                     
                      split_seurat <- SplitObject(seuratreactive$obj, split.by = "orig.ident")
                      
                      split_seurat <- split_seurat[input$ChatSample]
@@ -32481,8 +32739,6 @@ server <- function(input, output, session) {
                      shinyjs::hide("ChatBox11")
                      shinyjs::hide("ChatBox12")
                      shinyjs::hide("ChatBox13")
-                     
-                     removeModal()
                      
                    })
     },
@@ -32774,6 +33030,8 @@ server <- function(input, output, session) {
                    value = 0, {
                      incProgress(1/20)
                      
+                     removeModal()
+                     
                      #Dataset 1
                      split_seurat1 <- SplitObject(seuratreactive$obj, split.by = "orig.ident")
                      
@@ -32958,8 +33216,6 @@ server <- function(input, output, session) {
                      shinyjs::show("ChatBox11")
                      shinyjs::show("ChatBox12")
                      shinyjs::show("ChatBox13")
-                     
-                     removeModal()
                    })
     },
     error = function(e) {
@@ -37324,6 +37580,8 @@ server <- function(input, output, session) {
                      if (!is.null(seuratreactive$PATHWAY)) {
                        incProgress(1/10)
                        
+                       removeModal()
+                       
                        seuratreactive$geneListPA = seuratreactive$PATHWAY$`Log2 fold change`
                        
                        names(seuratreactive$geneListPA) = seuratreactive$PATHWAY$ENTREZID
@@ -37370,8 +37628,6 @@ server <- function(input, output, session) {
                        Yu$result <- setReadable(Yu$result, seuratreactive$orgDb, 'ENTREZID')
                        
                        incProgress(10/10)
-                       
-                       removeModal()
                        
                        if (!is.null(seuratreactive$PATHWAY)) {
                          if (input$iscollapsebox7 == FALSE) {
@@ -37729,6 +37985,8 @@ server <- function(input, output, session) {
                      if (!is.null(seuratreactive$PATHWAYSDE)) {
                        incProgress(1/10)
                        
+                       removeModal()
+                       
                        seuratreactive$geneListSPA = seuratreactive$PATHWAYSDE$`Log2 fold change`
                        
                        names(seuratreactive$geneListSPA) = seuratreactive$PATHWAYSDE$ENTREZID
@@ -37777,8 +38035,6 @@ server <- function(input, output, session) {
                        seuratreactive$pvalueSPA <- input$pvalueSPA
                        
                        incProgress(10/10)
-                       
-                       removeModal()
                        
                        if (!is.null(seuratreactive$PATHWAYSDE)) {
                          js$collapse("SPABoxIntro")
