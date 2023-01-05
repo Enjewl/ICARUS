@@ -235,6 +235,7 @@ ICARUS functionality is based on the [Seurat single cell RNA-seq toolkit ](https
 
 ICARUS additionally incorporates functionality from the following R packages:
 * <a href="https://github.com/chris-mcginnis-ucsf/DoubletFinder" target="_blank">DoubletFinder</a> 
+* <a href="https://github.com/KlugerLab/ALRA" target="_blank">ALRA</a> 
 * <a href="https://github.com/IanevskiAleksandr/sc-type" target="_blank">sctype</a>
 * <a href="https://bioconductor.org/packages/release/bioc/html/SingleR.html" target="_blank">SingleR</a>
 * <a href="https://github.com/songw01/MEGENA" target="_blank">MEGENA</a>
