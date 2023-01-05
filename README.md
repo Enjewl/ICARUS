@@ -129,7 +129,7 @@ _For detailed list of saved objects, please refer to the [Documentation](https:/
 
 <!-- CHANGELOG -->
 ## Changelog
-<h4 class="mt-4"> <span class="p-2 bg-light shadow rounded text-success"> ICARUS Version 2.3</span> - 1st January, 2023</h4>
+<h4 class="mt-4"> <span class="p-2 bg-light shadow rounded text-success"> ICARUS Version 2.4</span> - 1st January, 2023</h4>
              <ul class="list-unstyled mt-3">
              <ul>
              <li class="text-muted ml-3"><i class="mdi mdi-circle-medium mr-2"></i>NEW An option to impute dropouts using <a href="https://www.nature.com/articles/s41467-021-27729-z" target="_blank">Adaptively-thresholded low rank approximation (ALRA) method</a>.</li>
