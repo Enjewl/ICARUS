@@ -15,6 +15,7 @@ library(shinyWidgets)
 library(HGNChelper)
 library(openxlsx)
 library(stringi)
+library(cowplot)
 
 ####GLOBAL ENVIROMENT####
 #Colours
@@ -226,8 +227,8 @@ body <- dashboardBody(
                 
                 h2(HTML('<h2 style = "text-align:justify;color:#000000; margin-top:-20px;"><b>Contact Us</b>')),
                 
-                h4(HTML('<h4 style = "text-align:justify;"> <b>Version of the application: </b> ICARUS v2.3')),
-                actionBttn("updates2", "See what's new in ICARUS v2.3", size = "sm"),
+                h4(HTML('<h4 style = "text-align:justify;"> <b>Version of the application: </b> ICARUS v2.4')),
+                actionBttn("updates2", "See what's new in ICARUS v2.4", size = "sm"),
                 h4(HTML('<h4 style = "text-align:justify;">ICARUS was designed and maintained by Andrew Jiang based at the Applied Translational Genetics Group, The University of Auckland, Auckland, New Zealand. <br>
                     Please forward any queries to <a href = "mailto: ajia169@aucklanduni.ac.nz">ajia169@aucklanduni.ac.nz</a> or visit the <a href="https://github.com/Enjewl/ICARUS" target="_blank">Github page</a>.')), br(), 
                 
@@ -594,10 +595,14 @@ body <- dashboardBody(
                            column(6,
                                   sliderInput("sizeQC", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
                                               min = 0, max = 20,
-                                              value = 2, step = 1))
-                           ),
-                           
-                         withSpinner(plotOutput("plot", height = "1200"))))
+                                              value = 2, step = 1)),
+                           column(6,
+                                  sliderInput("QCplotheight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Plot Height')),
+                                              min = 0, max = 100,
+                                              value = 20, step = 1))
+                         ),
+                         
+                         withSpinner(htmlOutput("plotUI"))))
             ),
             fluidRow(
               column(3),
@@ -697,23 +702,28 @@ body <- dashboardBody(
                          ),
                          
                          fluidRow(
-                           column(4,
+                           column(3,
                                   sliderInput("labelsizeD", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Label Size')),
                                               min = 0, max = 50,
                                               value = 10, step = 1)),
-                           column(4,
+                           column(3,
                                   sliderInput("sizeD", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;"> Point Size')),
                                               min = 0, max = 20,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("opacityD", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Opacity')),
                                               min = 0, max = 1,
-                                              value = 0.8, step = 0.1))
+                                              value = 0.8, step = 0.1)),
+                           
+                           column(3,
+                                  sliderInput("Dplotheight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Plot Height')),
+                                              min = 0, max = 100,
+                                              value = 20, step = 1))
                          ),
                          
                          
-                         withSpinner(plotlyOutput("plotdoublesim", height = "1200")))
+                         withSpinner(htmlOutput("plotdoublesimUI")))
               )),
             
             collapseInput(inputId = "iscollapseboxD", boxId = "DBoxIntro")
@@ -826,10 +836,14 @@ body <- dashboardBody(
                            column(6,
                                   sliderInput("sizeQC2", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
                                               min = 0, max = 20,
-                                              value = 2, step = 1))
+                                              value = 2, step = 1)),
+                           column(6,
+                                  sliderInput("QC2plotheight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Plot Height')),
+                                              min = 0, max = 100,
+                                              value = 20, step = 1))
                          ),
                          
-                         withSpinner(plotOutput("plotCombine", height = "1200"))))
+                         withSpinner(htmlOutput("plotCombineUI"))))
             ),
             fluidRow(
               column(3),
@@ -928,23 +942,28 @@ body <- dashboardBody(
                          ),
                          
                          fluidRow(
-                           column(4,
+                           column(3,
                                   sliderInput("labelsizeD2", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Label Size')),
                                               min = 0, max = 50,
                                               value = 10, step = 1)),
-                           column(4,
+                           column(3,
                                   sliderInput("sizeD2", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
                                               min = 0, max = 20,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("opacityD2", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Opacity')),
                                               min = 0, max = 1,
-                                              value = 0.8, step = 0.1))
+                                              value = 0.8, step = 0.1)),
+                           
+                           column(3,
+                                  sliderInput("D2plotheight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Plot Height')),
+                                              min = 0, max = 100,
+                                              value = 20, step = 1))
                          ),
                          
                          
-                         withSpinner(plotlyOutput("plotdoublesim2", height = "1200")))
+                         withSpinner(htmlOutput("plotdoublesim2UI")))
               )),
             
             collapseInput(inputId = "iscollapseboxD2", boxId = "DBoxIntro2")
@@ -1049,9 +1068,7 @@ body <- dashboardBody(
                           <a href="https://satijalab.org/seurat/articles/integration_rpca.html" target="_blank">Reciprocal PCA (RPCA)</a> or 
                           <a href="https://doi.org/10.1038/s41592-019-0619-0" target="_blank">Harmony</a> methodologies. 
                           For CCA and RPCA methods, the number of <b> k-anchors </b> (strength of integration) 
-                          can be adjusted, please increase the k-anchors parameter (default value = 5) for samples where integration of certain cell types are not aligned. </li>
-                          <li>An option to impute dropouts (false zeros in the dataset due to low amounts of mRNA in individual cells resulting in insufficient mRNA capture) is available. 
-                          The <a href="https://www.nature.com/articles/s41467-021-27729-z" target="_blank">Adaptively-thresholded low rank approximation (ALRA) method</a> to impute dropouts is used.</li></ol><br>')),
+                          can be adjusted, please increase the k-anchors parameter (default value = 5) for samples where integration of certain cell types are not aligned. </li></ol><br>')),
                   
                   img(id="DR2_ICARUS",src="DR2_ICARUS.png",width="100%"), br(), br(),
                   
@@ -1224,23 +1241,27 @@ body <- dashboardBody(
                          ),
                          
                          fluidRow(
-                           column(4,
+                           column(3,
                                   sliderInput("labelsize", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Label Size')),
                                               min = 0, max = 50,
                                               value = 10, step = 1)),
-                           column(4,
+                           column(3,
                                   sliderInput("size", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
                                               min = 0, max = 20,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("opacity", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Opacity')),
                                               min = 0, max = 1,
-                                              value = 0.8, step = 0.1))
+                                              value = 0.8, step = 0.1)),
+                           column(3,
+                                  sliderInput("Cplotheight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Plot Height')),
+                                              min = 0, max = 100,
+                                              value = 20, step = 1))
                          ),
                          
                          
-                         withSpinner(plotlyOutput("plot8", height = "1200")))
+                         withSpinner(htmlOutput("plot8UI")))
               )),
             
             fluidRow(
@@ -1373,23 +1394,28 @@ body <- dashboardBody(
                                                      width = "98%")
                                   )),
                          fluidRow(
-                           column(4,
+                           column(3,
                                   sliderInput("labelsizeCC", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Label Size')),
                                               min = 0, max = 50,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("sizeCC", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
                                               min = 0, max = 20,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("opacityCC", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Opacity')),
                                               min = 0, max = 1,
-                                              value = 0.8, step = 0.1))
+                                              value = 0.8, step = 0.1)),
+                           column(3,
+                                  sliderInput("CCplotheight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Plot Height')),
+                                              min = 0, max = 100,
+                                              value = 20, step = 1))
+                           
                          ),
                          
-                         withSpinner(plotlyOutput("plotCC", height = "1200")),
+                         withSpinner(htmlOutput("plotCCUI")),
                          htmlOutput("GenepathwaytextCC")
                      ))),
             
@@ -1559,23 +1585,28 @@ body <- dashboardBody(
                                                      selected = "Seurat Clusters", width = "98%")
                                   )),
                          fluidRow(
-                           column(4,
+                           column(3,
                                   sliderInput("labelsizeL", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Label Size')),
                                               min = 0, max = 50,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("sizeL", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
                                               min = 0, max = 20,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("opacityL", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Opacity')),
                                               min = 0, max = 1,
-                                              value = 0.8, step = 0.1))
+                                              value = 0.8, step = 0.1)),
+                           
+                           column(3,
+                                  sliderInput("Lplotheight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Plot Height')),
+                                              min = 0, max = 100,
+                                              value = 20, step = 1))
                          ),
                          
-                         withSpinner(plotlyOutput("plot9", height = "1200"))
+                         withSpinner(htmlOutput("plot9UI"))
                      ))),
             
             fluidRow( 
@@ -1731,23 +1762,28 @@ body <- dashboardBody(
                                                      width = "98%"))
                          ),
                          fluidRow(
-                           column(4,
+                           column(3,
                                   sliderInput("labelsizeGE", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Label Size')),
                                               min = 0, max = 50,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("sizeGE", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
                                               min = 0, max = 20,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("opacityGE", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Opacity')),
                                               min = 0, max = 1,
-                                              value = 0.8, step = 0.1))
+                                              value = 0.8, step = 0.1)),
+                           
+                           column(3,
+                                  sliderInput("GEplotheight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Plot Height')),
+                                              min = 0, max = 100,
+                                              value = 20, step = 1))
                          ),
                          
-                         withSpinner(plotlyOutput("plotGE", height = "1200")),
+                         withSpinner(htmlOutput("plotGEUI")),
                          htmlOutput("Genepathwaytext")
                      ))),
             
@@ -1830,7 +1866,7 @@ body <- dashboardBody(
                   fluidRow(
                     column(4,
                            sliderInput("GEDotSize", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Font Size')),
-                                       min = 1, max = 25,
+                                       min = 1, max = 50,
                                        value = 10, step = 1)),
                     column(4,
                            sliderInput("dotscale", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Dot Scale')),
@@ -1947,7 +1983,7 @@ body <- dashboardBody(
                     column(12,
                            prettyRadioButtons("radioMEGENAselect", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Plot Options')), 
                                               list("Cell Type Module Activity","Differentially Expressed Genes (Number of DEGs)", "Differentially Expressed Genes (Percentage of DEGs)", "Custom Differentially Expressed Genes (Number of DEGs)",
-                                                  "Custom Differentially Expressed Genes (Percentage of DEGs)"), inline = TRUE, selected = "Cell Type Module Activity",
+                                                   "Custom Differentially Expressed Genes (Percentage of DEGs)"), inline = TRUE, selected = "Cell Type Module Activity",
                                               icon = icon("check"),
                                               animation = "jelly"))
                   ),
@@ -2050,23 +2086,28 @@ body <- dashboardBody(
                                                      width = "98%"))
                          ),
                          fluidRow(
-                           column(4,
+                           column(3,
                                   sliderInput("labelsizeSCENIC", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Label Size')),
                                               min = 0, max = 50,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("sizeSCENIC", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
                                               min = 0, max = 20,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("opacitySCENIC", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Opacity')),
                                               min = 0, max = 1,
-                                              value = 0.8, step = 0.1))
+                                              value = 0.8, step = 0.1)),
+                           
+                           column(3,
+                                  sliderInput("SCENICplotheight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Plot Height')),
+                                              min = 0, max = 100,
+                                              value = 20, step = 1))
                          ),
                          
-                         withSpinner(plotlyOutput("plotSCENIC", height = "1200"))
+                         withSpinner(htmlOutput("plotSCENICUI"))
                      ))),
             
             fluidRow(
@@ -2110,12 +2151,12 @@ body <- dashboardBody(
                   
                   fluidRow(
                     column(6,
-                    virtualSelectInput("Regulon_Select2", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Visualize Individual Cell Population:')), choices = NULL,
-                                       search = T,
-                                       hideClearButton = F,
-                                       placeholder = "Please type your cell population of interest",
-                                       width = "98%"),
-                  )),
+                           virtualSelectInput("Regulon_Select2", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Visualize Individual Cell Population:')), choices = NULL,
+                                              search = T,
+                                              hideClearButton = F,
+                                              placeholder = "Please type your cell population of interest",
+                                              width = "98%"),
+                    )),
                   
                   
                   withSpinner(htmlOutput("Dotplot_SCENICUI")))
@@ -2150,23 +2191,6 @@ body <- dashboardBody(
                   ),
                   
                   withSpinner(plotOutput("TF_Regulon_Map", height = 1500)))
-            ),
-            
-            fluidRow(
-              box(id = "SCENICBox4", title = p("Regulon Cluster Expression", actionBttn("SCENICBoxInfo4", "Info"), actionBttn("downloadRegulonClusterSCENIC", "Download Plot (UMAP)", icon = icon("download")), actionBttn("downloadRegulonClusterSCENIC2", "Download Plot (t-SNE)", icon = icon("download"))), status = "warning", solidHeader = F,
-                  collapsible = TRUE, width = 12, 
-                  sidebar = boxSidebar(id = "ViewSpecificRegulons", startOpen = TRUE, width = 25, background = "#e8ebe9",
-                                       radioGroupButtons("checkboxRegulonCluster", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select UMAP or t-SNE')), choices = c("UMAP", "t-SNE"), justified = TRUE),
-                                       virtualSelectInput("Regulon_Select", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Visualize Regulon:')), choices = NULL,
-                                                          search = T,
-                                                          hideClearButton = F,
-                                                          placeholder = "Please type your regulon of interest",
-                                                          width = "98%"),
-                                       p(style = "color: #FF0000;", "*This sidebar is minimizable by clicking the cog icon on the top right of the box")
-                  ),
-                  withSpinner(plotOutput("RegulonClusterSCENIC", height = "600"))
-                  
-              )
             )
             
     ),
@@ -2391,22 +2415,26 @@ body <- dashboardBody(
                                                      width = "98%"))
                          ),
                          fluidRow(
-                           column(4,
+                           column(3,
                                   sliderInput("labelsizeTA", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Label Size')),
                                               min = 0, max = 50,
                                               value = 10, step = 1)),
-                           column(4,
+                           column(3,
                                   sliderInput("sizeTA", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
                                               min = 0, max = 20,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("opacityTA", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Opacity')),
                                               min = 0, max = 1,
-                                              value = 0.8, step = 0.1))
+                                              value = 0.8, step = 0.1)),
+                           column(3,
+                                  sliderInput("TAplotheight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Plot Height')),
+                                              min = 0, max = 100,
+                                              value = 20, step = 1))
                          ),
                          
-                         withSpinner(plotlyOutput("plotTA", height = "1200"))
+                         withSpinner(htmlOutput("plotTAUI"))
                      ),
                      box(id = "TABox5", title = "Selected Cells (lasso)", status = "warning", solidHeader = F,
                          collapsible = TRUE, width = NULL,
@@ -2416,34 +2444,42 @@ body <- dashboardBody(
             
             fluidRow(
               column(12,
-              box(id = "TABox6", title = p("Monocle3 Trajectory Visualisation", actionBttn("TABoxInfo2", "Info"), actionBttn("downloadUMAPmonocle", "Download Plot", icon = icon("download"))), status = "warning", solidHeader = F,
-                  collapsible = TRUE, width = NULL,
-
-                  fluidRow(
-                    column(3,
-                           prettyRadioButtons("reductionmethodTA", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Plot Options')), 
-                                              list("2D","3D"), inline = TRUE, selected = "2D",
-                                              icon = icon("check"),
-                                              animation = "jelly")),
-                    
-                    column(3,
-                           sliderInput("labelsizemonocleTA", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Label Size')),
-                                       min = 0, max = 50,
-                                       value = 10, step = 1)),
-                    column(3,
-                           sliderInput("sizemonocleTA", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
-                                       min = 0, max = 10,
-                                       value = 5, step = 0.5)),
-                    
-                    column(3,
-                           sliderInput("opacitymonocleTA", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Opacity')),
-                                       min = 0, max = 1,
-                                       value = 0.8, step = 0.1))
-                  ),
-                  
-                  withSpinner(plotlyOutput("plotmonocleTA", height = "1200"))
-              )
-            )),
+                     box(id = "TABox6", title = p("Monocle3 Trajectory Visualisation", actionBttn("TABoxInfo2", "Info"), actionBttn("downloadUMAPmonocle", "Download Plot", icon = icon("download"))), status = "warning", solidHeader = F,
+                         collapsible = TRUE, width = NULL,
+                         
+                         fluidRow(
+                           column(2,
+                           column(12,
+                                  prettyRadioButtons("reductionmethodTA", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Plot Options')), 
+                                                     list("2D","3D"), inline = TRUE, selected = "2D",
+                                                     icon = icon("check"),
+                                                     animation = "jelly"))),
+                           column(10,
+                           column(6,
+                                  sliderInput("labelsizemonocleTA", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Label Size')),
+                                              min = 0, max = 50,
+                                              value = 10, step = 1)),
+                           column(6,
+                                  sliderInput("sizemonocleTA", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
+                                              min = 0, max = 10,
+                                              value = 5, step = 0.5))
+                           )),
+                         fluidRow(
+                           column(2),
+                           column(10,                           
+                             column(6,
+                                    sliderInput("opacitymonocleTA", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Opacity')),
+                                                min = 0, max = 1,
+                                                value = 0.8, step = 0.1)),
+                             column(6,
+                                    sliderInput("TA2plotheight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Plot Height')),
+                                                min = 0, max = 100,
+                                                value = 20, step = 1))
+                             )),
+                         
+                         withSpinner(htmlOutput("plotmonocleTAUI"))
+                     )
+              )),
             
             fluidRow(
               column(12,
@@ -3053,7 +3089,7 @@ body <- dashboardBody(
                      box(id = "MMBox1", title = p("Gene Expression", actionBttn("MMBoxInfo", "Info")), status = "warning", solidHeader = F, 
                          collapsible = T, width = NULL,
                          
-                         virtualSelectInput("MMInput", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Enter single or multiple genes:')), choices = NULL, multiple = F, 
+                         virtualSelectInput("MMInput", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Enter gene:')), choices = NULL, multiple = F, 
                                             search = T,
                                             placeholder = "Please select gene(s) to view its expression"),
                          p(style="text-align: center;", actionBttn("geneMM", "APPLY", icon("play"),
@@ -3078,29 +3114,33 @@ body <- dashboardBody(
                                                      selected = "Gene expression"))
                          ),
                          fluidRow(
-                           column(4,
+                           column(3,
                                   sliderInput("labelsizeMM", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Label Size')),
                                               min = 0, max = 50,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("sizeMM", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
                                               min = 0, max = 20,
                                               value = 10, step = 1)),
                            
-                           column(4,
+                           column(3,
                                   sliderInput("opacityMM", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Opacity')),
                                               min = 0, max = 1,
-                                              value = 0.8, step = 0.1))
+                                              value = 0.8, step = 0.1)),
+                           column(3,
+                                  sliderInput("MMplotheight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Plot Height')),
+                                              min = 0, max = 100,
+                                              value = 20, step = 1))
                          ),
                          fluidRow( 
                            column(6,
                                   strong("scRNA-seq"),        
-                                  withSpinner(plotlyOutput("plotMM1", height = "700"))
+                                  withSpinner(htmlOutput("plotMM1UI"))
                            ),
                            column(6,
                                   strong("Multimodal analysis"),
-                                  withSpinner(plotlyOutput("plotMM2", height = "700"))
+                                  withSpinner(htmlOutput("plotMM2UI"))
                            )
                          )
                      )
@@ -3256,7 +3296,7 @@ body <- dashboardBody(
                                                      choices = list("Labelled Cells", "Seurat Clusters", "Sample", "Cell Cycle Phase", "Number of unique genes (nFeature_RNA)", "Number of UMIs per cell (nCount_RNA)",
                                                                     "Ribosomal Percentage (percent.ribo)", "Mitochondrial Percentage (percent.mt)",
                                                                     "Differential Expression"),
-                                                     selected = "Differential Expression"))
+                                                     selected = "Sample"))
                          ),
                          fluidRow(
                            column(4,
@@ -3296,6 +3336,8 @@ body <- dashboardBody(
                                                     min = 0, max = 1,
                                                     value = 0.25, step = 0.01, width = "98%"),
                                        
+                                       materialSwitch("onlyposDE", label = h4(HTML('<h4 style = "text-align:justify;color:#000000">Return only upregulated genes')), value = FALSE, status = "primary"),
+                                       
                                        pickerInput("padjustDE1", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">p-value adjustment method')),
                                                    choices = list("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr"),
                                                    selected = "fdr",
@@ -3303,7 +3345,7 @@ body <- dashboardBody(
                                        
                                        numericInput("pvalDE", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">p-value threshold')),
                                                     min = 0.1, max = 1,
-                                                    value = 1, step = 0.01, width = "98%"),
+                                                    value = 0.05, step = 0.01, width = "98%"),
                                        p(style="text-align: center;", actionBttn("buttonDEGDE", "APPLY", icon("play"),
                                                                                  style = "jelly",
                                                                                  color = "success")),
@@ -3470,30 +3512,34 @@ body <- dashboardBody(
                                                              "Ribosomal Percentage (percent.ribo)", "Mitochondrial Percentage (percent.mt)"))),
                   ),
                   fluidRow(
-                    column(4,
+                    column(3,
                            sliderInput("labelsizeSDE", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Label Size')),
                                        min = 0, max = 50,
                                        value = 10, step = 1)),
                     
-                    column(4,
+                    column(3,
                            sliderInput("sizeSDE", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Point Size')),
                                        min = 0, max = 20,
                                        value = 10, step = 1)),
                     
-                    column(4,
+                    column(3,
                            sliderInput("opacitySDE", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Opacity')),
                                        min = 0, max = 1,
-                                       value = 0.8, step = 0.1))
+                                       value = 0.8, step = 0.1)),
+                    column(3,
+                           sliderInput("customplotheight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Plot Height')),
+                                       min = 1, max = 100,
+                                       value = 20, step = 1))
                   ),
                   
                   fluidRow( 
                     column(6,
                            h4(HTML('<h4 style = "text-align:justify;color:#000000;"><b>Use lasso tool to select cells for group 1</b>')),        
-                           withSpinner(plotlyOutput("plotSDE1", height = "700"))
+                           withSpinner(htmlOutput("plotSDE1UI"))
                     ),
                     column(6,
                            h4(HTML('<h4 style = "text-align:justify;color:#000000;"><b>Use lasso tool to select cells for group 2</b>')),
-                           withSpinner(plotlyOutput("plotSDE2", height = "700"))
+                           withSpinner(htmlOutput("plotSDE2UI"))
                     )
                   ),
                   p(style="text-align: center;", actionBttn("SelectedCellsGO", "COMPARE", icon = icon("dna"),
@@ -3537,13 +3583,15 @@ body <- dashboardBody(
                                        numericInput("minSDE", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">min.pct')),
                                                     min = 0, max = 1,
                                                     value = 0.25, step = 0.01, width = "98%"),
+                                       materialSwitch("onlyposSDE", label = h4(HTML('<h4 style = "text-align:justify;color:#000000">Return only upregulated genes')), value = FALSE, status = "primary"),
+                                       
                                        pickerInput("padjustSDE1", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">p-value adjustment method')),
                                                    choices = list("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr"),
                                                    selected = "fdr",
                                                    width = "98%"),
                                        numericInput("pvalSDE", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">p-value threshold')),
                                                     min = 0.1, max = 1,
-                                                    value = 1, step = 0.01, width = "98%"),
+                                                    value = 0.05, step = 0.01, width = "98%"),
                                        p(style="text-align: center;", actionBttn("buttonSDEGDE", "APPLY", icon("play"),
                                                                                  style = "jelly",
                                                                                  color = "success")),
@@ -4143,8 +4191,8 @@ ui <- dashboardPage(
     title = img(id="ICARUS",src="ICARUS.png",width="70%"),
     dropdownMenu(type = "notifications",
                  notificationItem(
-                   text = p("ICARUS has been updated to v2.3",
-                            actionBttn("updates", "See what's new in ICARUS v2.3", size = "sm")),
+                   text = p("ICARUS has been updated to v2.4",
+                            actionBttn("updates", "See what's new in ICARUS v2.4", size = "sm")),
                    icon = icon("gear")
                  )
     ),
@@ -4178,7 +4226,6 @@ server <- function(input, output, session) {
                    incProgress(0.1)
                    
                    incProgress(0.2)
-                   library(scCustomize)
                    library(SeuratWrappers)
                    library(MAST)
                    library(DESeq2)
@@ -4275,15 +4322,16 @@ server <- function(input, output, session) {
                    seuratreactive$variablefeatures <- NULL
                    seuratreactive$SCTransformDR <- NULL
                    seuratreactive$ALRAL <- NULL
+                   seuratreactive$npcDR <- NULL
                    
                    #DR2
                    seuratreactive$obj <- NULL
                    seuratreactive$SCTransformDR2 <- NULL
+                   seuratreactive$npcDR2 <- NULL
                    seuratreactive$Combined.list <- NULL
                    seuratreactive$VFintegrated <- NULL
                    seuratreactive$integrationreduction <- NULL
                    seuratreactive$kanchor <- NULL
-                   seuratreactive$ALRAL2 <- NULL
                    
                    #C
                    seuratreactive$integera <- NULL
@@ -4410,6 +4458,7 @@ server <- function(input, output, session) {
                    seuratreactive$plot.dataMM <- NULL
                    
                    #DE
+                   seuratreactive$onlyposDE <- NULL
                    seuratreactive$Subset_GENES <- NULL
                    seuratreactive$DE_clusters_samples <- NULL
                    seuratreactive$DECluster <- NULL
@@ -4437,6 +4486,7 @@ server <- function(input, output, session) {
                    seuratreactive$PATHWAY <- NULL
                    
                    #SDE
+                   seuratreactive$onlyposSDE <- NULL
                    seuratreactive$Subset_GENESSDE <- NULL
                    seuratreactive$selectedkey1 <- NULL
                    seuratreactive$selectedkey2 <- NULL
@@ -4619,7 +4669,6 @@ server <- function(input, output, session) {
                    shinyjs::hide("SCENICBox1")
                    shinyjs::hide("SCENICBox2")
                    shinyjs::hide("SCENICBox3")
-                   shinyjs::hide("SCENICBox4")
                    
                    #MAGMA
                    if (input$iscollapseboxMAGMA == TRUE) {
@@ -4861,7 +4910,15 @@ server <- function(input, output, session) {
   observeEvent(input$updates, {
     showModal(modalDialog(
       title = strong("ICARUS CHANGE LOG"),
-      HTML('<h4 class="mt-4"> <span class="p-2 bg-light shadow rounded text-success"> ICARUS Version 2.3</span> - 18th October, 2022</h4>
+      HTML('<h4 class="mt-4"> <span class="p-2 bg-light shadow rounded text-success"> ICARUS Version 2.4</span> - 1st January, 2023</h4>
+             <ul class="list-unstyled mt-3">
+             <ul>
+             <li class="text-muted ml-3"><i class="mdi mdi-circle-medium mr-2"></i>NEW An option to impute dropouts using <a href="https://www.nature.com/articles/s41467-021-27729-z" target="_blank">Adaptively-thresholded low rank approximation (ALRA) method.</a></li>
+             </ul>
+           </ul>
+      
+      
+      <h4 class="mt-4"> <span class="p-2 bg-light shadow rounded text-success"> ICARUS Version 2.3</span> - 18th October, 2022</h4>
              <ul class="list-unstyled mt-3">
              <ul>
              <li class="text-muted ml-3"><i class="mdi mdi-circle-medium mr-2"></i>NEW Improved search functionality for genes and gene pathways.</li>
@@ -4930,7 +4987,13 @@ server <- function(input, output, session) {
   observeEvent(input$updates2, {
     showModal(modalDialog(
       title = strong("ICARUS CHANGE LOG"),
-      HTML('
+      HTML('<h4 class="mt-4"> <span class="p-2 bg-light shadow rounded text-success"> ICARUS Version 2.4</span> - 1st January, 2023</h4>
+             <ul class="list-unstyled mt-3">
+             <ul>
+             <li class="text-muted ml-3"><i class="mdi mdi-circle-medium mr-2"></i>NEW An option to impute dropouts using <a href="https://www.nature.com/articles/s41467-021-27729-z" target="_blank">Adaptively-thresholded low rank approximation (ALRA) method</a>.</li>
+             </ul>
+           </ul>
+           
       <h4 class="mt-4"> <span class="p-2 bg-light shadow rounded text-success"> ICARUS Version 2.3</span> - 18th October, 2022</h4>
              <ul class="list-unstyled mt-3">
              <ul>
@@ -5385,20 +5448,6 @@ server <- function(input, output, session) {
     showModal(modalDialog(
       title = strong("Regulon Transcription Factor Map"),
       h4(HTML('<h4 style = "text-align:justify"> Map of regulons and shared transcription factors. The number of transcription factors shown can be altered in the sidebar menu.')),
-      easyClose = TRUE,
-      footer = NULL
-    ))
-  })
-  
-  observeEvent(input$SCENICBoxInfo4, {
-    showModal(modalDialog(
-      title = strong("Regulon Cluster Expression"),
-      h4(HTML('<h4 style = "text-align:justify"> Regulon activity across UMAP/t-SNE plots. 
-              3 panels are shown for each dimensionality reduction method: <br>
-              <ol><li>AUC threshold of regulon activity. AUC (Area Under the Curve) estimates the proportion of transcription factors in the regulon that are highly expressed in each cell.
-              Cells with AUC values greater than the threshold exhibit regulon activity. </li>
-              <li>UMAP/t-SNE representation of cells passing the AUC threshold. </li>
-              <li>UMAP/t-SNE representation of regulon expression (transcription factor activity). Cells highlighted in red indicate higher expression.')),
       easyClose = TRUE,
       footer = NULL
     ))
@@ -6270,6 +6319,7 @@ server <- function(input, output, session) {
       variablefeatures <- seuratreactive$variablefeatures
       SCTransformDR <- seuratreactive$SCTransformDR
       ALRAL <- seuratreactive$ALRAL
+      npcDR <- seuratreactive$npcDR
       
       #DR2
       Combined.list <- seuratreactive$Combined.list
@@ -6277,7 +6327,7 @@ server <- function(input, output, session) {
       integrationreduction <- seuratreactive$integrationreduction
       kanchor <- seuratreactive$kanchor
       SCTransformDR2 <- seuratreactive$SCTransformDR2
-      ALRAL2 <- seuratreactive$ALRAL2
+      npcDR2 <- seuratreactive$npcDR2
       
       #C
       NumberofPCs_GraphConstruction <- seuratreactive$integera
@@ -6400,6 +6450,7 @@ server <- function(input, output, session) {
       GenePathwayNames <- seuratreactive$Gene_vector_msig
       
       #SDE
+      onlyposSDE <- seuratreactive$onlyposSDE
       selectedcells_lasso1 <- seuratreactive$selectedkey1
       selectedcells_lasso2 <- seuratreactive$selectedkey2
       GOlabelsSDE <- seuratreactive$GOlabelsSDE
@@ -6429,6 +6480,7 @@ server <- function(input, output, session) {
       geneList_CustomPathway <- seuratreactive$geneListSPA
       
       #DE
+      onlyposDE <- seuratreactive$onlyposDE
       DifferentialExpression_clusters_BetweenSampleComparison <- seuratreactive$DE_clusters_samples
       DifferentialExpression_ClusterOfInterest_BetweenSampleComparison <- seuratreactive$DECluster
       DifferentialExpression_SampleOfInterest1_BetweenSampleComparison <- seuratreactive$DEInput1_samples
@@ -6469,8 +6521,8 @@ server <- function(input, output, session) {
            "PostQC_dataset2", "type2", "original_dataset2", "QC_nFeature_threshold1_dataset2", "QC_nFeature_threshold2_dataset2", "QC_nCount_threshold1_dataset2", "QC_nCount_threshold2_dataset2",
            "QC_percent.mt_threshold1_dataset2", "QC_percent.mt_threshold2_dataset2", "QC_percent.ribo_threshold1_dataset2", "QC_percent.ribo_threshold2_dataset2", "mincellsCombine", "minfeaturesCombine",
            "Remove2", "Removed2", "doublesim2", "plot.data.doublets2", 
-           "Final_Seurat_Object", "variablefeatures", "SCTransformDR", "ALRAL",
-           "Combined.list", "VFintegrated", "integrationreduction", "kanchor", "SCTransformDR2", "ALRAL2",
+           "Final_Seurat_Object", "variablefeatures", "SCTransformDR", "ALRAL", "npcDR",
+           "Combined.list", "VFintegrated", "integrationreduction", "kanchor", "SCTransformDR2", "npcDR2",
            "NumberofPCs_GraphConstruction", "k.param", "n.trees", "Resolution", "NumberofPCs_UMAP", "knn_UMAP", "min.dist_UMAP", "ClusteringAlgorithm", "NumberofPCs_tsne", "Perplexity_tsne",
            "max.iterations_tsne", "CellComposition", "plot.data", "plot.data.original",
            "Regress_Confounder", "Regress_genes", "Regress_pathway", "GeneR", "msigdb", "orgDb", "KEGG_species", "REACTOME_species", "REACTOME_species2",
@@ -6481,13 +6533,13 @@ server <- function(input, output, session) {
            "titleGE", "GeneExpression_GeneInput", "GeneExpression_PathwayInput", "GenePathwayNames",
            "cellchat", "cellchatM", "object.list", "ChatChoose", "ChatSample", "Chatdb", "ChatMultiple1Sample", "ChatMultiple2Sample", "Chat_selectcluster", "Chat_number", "Chatpval",
            "markersDRUG", "markersDRUG2", "DRUGdf", "DRUGdf2",
-           "selectedcells_lasso1", "selectedcells_lasso2", "GOlabelsSDE", "padjustSDE1", "testuseSDE", "CustomDifferentialExpression_log_threshold", "CustomDifferentialExpression_min.pct_threshold", "CustomDifferentialExpression_GeneSetEnrichmentInput",
+           "selectedcells_lasso1", "selectedcells_lasso2", "GOlabelsSDE", "padjustSDE1", "onlyposSDE", "testuseSDE", "CustomDifferentialExpression_log_threshold", "CustomDifferentialExpression_min.pct_threshold", "CustomDifferentialExpression_GeneSetEnrichmentInput",
            "CustomDifferentialExpression_GeneSetEnrichment_pvalue_threshold", "pvalSDE", "CustomDifferentialExpression_GeneSetEnrichment_padjust_method", "CustomDifferentialExpression_volcano_Foldchange_threshold1",
            "CustomDifferentialExpression_volcano_Foldchange_threshold2", "CustomDifferentialExpression_volcano_pvalue", "CustomDifferentialExpression_Table", "CustomDifferentialExpression_GeneSetEnrichment",
            "CustomDifferentialExpression_volcano_markers", "CustomDifferentialExpression_GeneSetEnrichment_PATHWAY",
            "SelectCustomPathwayAnalysis", "CustomPathwayAnalysis_pvalue_adjustment_method", "GOlabelsSPA", "CustomPathwayAnalysis_pvalue", "CustomPathwayAnalysis_GeneSetEnrichment",
            "CustomPathwayAnalysis_GeneSetEnrichment2", "geneList_CustomPathway",
-           "DifferentialExpression_clusters_BetweenSampleComparison", "padjustDE1", "testuseDE", "DifferentialExpression_ClusterOfInterest_BetweenSampleComparison", "DifferentialExpression_SampleOfInterest1_BetweenSampleComparison",
+           "DifferentialExpression_clusters_BetweenSampleComparison", "padjustDE1", "onlyposDE", "testuseDE", "DifferentialExpression_ClusterOfInterest_BetweenSampleComparison", "DifferentialExpression_SampleOfInterest1_BetweenSampleComparison",
            "DifferentialExpression_SampleOfInterest2_BetweenSampleComparison", "DifferentialExpression_comparison", "DifferentialExpression_clusters_BetweenClustersComparison", "DifferentialExpression_SampleOfInterest1_BetweenClustersComparison",
            "DifferentialExpression_SampleOfInterest2_BetweenClustersComparison", "DifferentialExpression_log_threshold", "DifferentialExpression_min.pct_threshold", "DifferentialExpression_GeneSetEnrichmentInput", "GOlabelsDE",
            "DifferentialExpression_GeneSetEnrichment_pvalue_threshold", "pvalDE", "DifferentialExpression_GeneSetEnrichment_padjust_method", "DifferentialExpression_volcano_Foldchange_threshold1", "DifferentialExpression_volcano_Foldchange_threshold2",
@@ -6810,7 +6862,7 @@ server <- function(input, output, session) {
     }, 
     
     content = function(file) {
-      ggsave(file, plot = ElbowPlot(seuratreactive$obj, ndims = 100),
+      ggsave(file, plot = ElbowPlot(seuratreactive$obj, ndims = seuratreactive$npcDR),
              width = input$ElbowWidth,
              height = input$ElbowHeight,
              units = "mm",
@@ -6961,10 +7013,10 @@ server <- function(input, output, session) {
     
     content = function(file) {
       if (seuratreactive$integrationreduction == "rpca" | seuratreactive$integrationreduction == "cca") {
-        q <- ElbowPlot(seuratreactive$obj, ndims = 100)
+        q <- ElbowPlot(seuratreactive$obj, ndims = seuratreactive$npcDR2)
       }
       else if (seuratreactive$integrationreduction == "harmony") {
-        q <- ElbowPlot(seuratreactive$obj, reduction = "harmony", ndims = 100)
+        q <- ElbowPlot(seuratreactive$obj, reduction = "harmony", ndims = seuratreactive$npcDR2)
       }
       
       ggsave(file, plot = q,
@@ -7052,7 +7104,9 @@ server <- function(input, output, session) {
             geom_text(size = input$labelsizeC/2, position = position_stack(vjust = 0.5)) +
             ylab("") + 
             theme_bw() +
-            theme(text = element_text(size=input$labelsizeC))
+            theme(text = element_text(size=input$labelsizeC),
+                  axis.text.x= element_text(size = input$labelsizeC),
+                  axis.text.y= element_text(size = input$labelsizeC))
         }
         else {
           plot <- ggplot(seuratreactive$Graph, aes(x=Sample, y=Percentage, fill = `Seurat Clusters`)) +
@@ -7062,7 +7116,9 @@ server <- function(input, output, session) {
                       position = position_stack(vjust = 0.5), size = input$labelsizeC/2) +
             ylab("") +
             theme_bw() +
-            theme(text = element_text(size=input$labelsizeC))
+            theme(text = element_text(size=input$labelsizeC),
+                  axis.text.x= element_text(size = input$labelsizeC),
+                  axis.text.y= element_text(size = input$labelsizeC))
         }
       }
       else if (input$Sample_selectionC == "Labelled Cells") {
@@ -7072,7 +7128,9 @@ server <- function(input, output, session) {
             geom_text(size = input$labelsizeC/2, position = position_stack(vjust = 0.5)) +
             ylab("") + 
             theme_bw() +
-            theme(text = element_text(size=input$labelsizeC))
+            theme(text = element_text(size=input$labelsizeC),
+                  axis.text.x= element_text(size = input$labelsizeC),
+                  axis.text.y= element_text(size = input$labelsizeC))
         }
         else {
           plot <- ggplot(seuratreactive$Graph, aes(x=Sample, y=Percentage, fill = `Labelled Cells`)) +
@@ -7082,7 +7140,9 @@ server <- function(input, output, session) {
                       position = position_stack(vjust = 0.5), size = input$labelsizeC/2) +
             ylab("") +
             theme_bw() +
-            theme(text = element_text(size=input$labelsizeC))
+            theme(text = element_text(size=input$labelsizeC),
+                  axis.text.x= element_text(size = input$labelsizeC),
+                  axis.text.y= element_text(size = input$labelsizeC))
         }
       }
       ggsave(file, plot = plot,
@@ -7284,14 +7344,14 @@ server <- function(input, output, session) {
         colnames(module.table)[1] <- "id" # first column of module table must be labelled as "id".
         
         plot <- plot_module_hierarchy(module.table = module.table,label.scaleFactor = input$genefontMEGENA,
-                                               arrow.size = 0.015, node.label.color = "blue", edge.color = "red")
+                                      arrow.size = 0.015, node.label.color = "blue", edge.color = "red")
       }
       else {
         plot <- plot_module(output.summary = seuratreactive$summary.output,PFN = seuratreactive$g,subset.module = input$MEGENA_modulesInput,
-                    layout = "kamada.kawai",label.hubs.only = input$checkboxMEGENA,
-                    gene.set = NULL,color.code =  "grey",
-                    output.plot = FALSE, out.dir = "modulePlot",col.names = palette(rainbow(6)),label.scaleFactor = input$genefontMEGENA,
-                    hubLabel.col = "black", label.alpha = input$TranspraentMEGENA, show.topn.hubs = Inf,show.legend = TRUE)
+                            layout = "kamada.kawai",label.hubs.only = input$checkboxMEGENA,
+                            gene.set = NULL,color.code =  "grey",
+                            output.plot = FALSE, out.dir = "modulePlot",col.names = palette(rainbow(6)),label.scaleFactor = input$genefontMEGENA,
+                            hubLabel.col = "black", label.alpha = input$TranspraentMEGENA, show.topn.hubs = Inf,show.legend = TRUE)
       }
       
       ggsave(file, plot = plot[[1]],
@@ -7495,13 +7555,15 @@ server <- function(input, output, session) {
         
         rssPlot <- plotRSS(seuratreactive$rss)
         
-      plot <- rssPlot$plot + 
-        theme(axis.text.x = element_text(angle=90, hjust=1, vjust = 0.5),
-              text = element_text(size=input$fontSCENIC2))
+        plot <- rssPlot$plot + 
+          theme(axis.text.x = element_text(angle=90, hjust=1, vjust = 0.5),
+                text = element_text(size=input$fontSCENIC2))
       }
       else {
         plot <- plotRSS_oneSet(seuratreactive$rss, setName = input$Regulon_Select2, n = length(rownames(seuratreactive$rss))-1) +
-          theme(text = element_text(size=input$fontSCENIC2))
+          theme(text = element_text(size=input$fontSCENIC2),
+              axis.text.x= element_text(size = input$fontSCENIC2),
+              axis.text.y= element_text(size = input$fontSCENIC2))
       }
       
       ggsave(file, plot = plot,
@@ -7626,172 +7688,6 @@ server <- function(input, output, session) {
              height = input$downloadRegulonSCENICHeight,
              units = "mm",
              device = input$downloadRegulonSCENICFile)
-    }
-  )
-  
-  observeEvent(input$downloadRegulonClusterSCENIC, {
-    showModal(modalDialog(
-      title = strong("Download Regulon Cluster Expression (UMAP)"),
-      numericInput("downloadRegulonClusterSCENICHeight", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Height of plot (mm)')),
-                   value = "480",
-                   min = "0",
-                   max = "1000"),
-      numericInput("downloadRegulonClusterSCENICWidth", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Width of plot (mm)')),
-                   value = "480",
-                   min = "0",
-                   max = "1000"),
-      virtualSelectInput("downloadRegulonClusterSCENICFile", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select type of file format')),
-                         choices = c("jpeg", "tiff", "png", "bmp"),
-                         selected = "png"),
-      downloadBttn("downloadRegulonClusterSCENICOutput", "Download"),
-      size = "s",
-      easyClose = TRUE,
-      footer = NULL
-    ))
-  })
-  
-  output$downloadRegulonClusterSCENICOutput <- downloadHandler(
-    filename = function() {
-      paste(paste(levels(as.factor(seuratreactive$obj@meta.data$orig.ident)), collapse = "_"), "_RegulonClusterExpressionUMAP.", input$downloadRegulonClusterSCENICFile, sep = "")
-    }, 
-    
-    content = function(file) {
-      
-      if (input$downloadRegulonClusterSCENICFile == "png") {
-        
-        png(filename = file, width = input$downloadRegulonClusterSCENICWidth, height = input$downloadRegulonClusterSCENICHeight,
-            units = "mm", pointsize = 12, bg = "white", res = 600)
-        
-        dr_coords <- Embeddings(seuratreactive$obj, reduction="umap")
-        dr_coords <- dr_coords[,1:2]
-        
-        par(mfrow=c(1,3))
-        AUCell::AUCell_plotTSNE(dr_coords, cellsAUC=selectRegulons(seuratreactive$regulonAUC, input$Regulon_Select))
-        
-        dev.off()
-      }
-      
-      else if (input$downloadRegulonClusterSCENICFile == "jpeg") {
-        jpeg(filename = file, width = input$downloadRegulonClusterSCENICWidth, height = input$downloadRegulonClusterSCENICHeight,
-             units = "mm", pointsize = 12, bg = "white", res = 600)
-        
-        dr_coords <- Embeddings(seuratreactive$obj, reduction="umap")
-        dr_coords <- dr_coords[,1:2]
-        
-        par(mfrow=c(1,3))
-        AUCell::AUCell_plotTSNE(dr_coords, cellsAUC=selectRegulons(seuratreactive$regulonAUC, input$Regulon_Select))
-        
-        dev.off()
-      }
-      
-      else if (input$downloadRegulonClusterSCENICFile == "tiff") {
-        tiff(filename = file, width = input$downloadRegulonClusterSCENICWidth, height = input$downloadRegulonClusterSCENICHeight,
-             units = "mm", pointsize = 12, bg = "white", res = 600)
-        
-        dr_coords <- Embeddings(seuratreactive$obj, reduction="umap")
-        dr_coords <- dr_coords[,1:2]
-        
-        par(mfrow=c(1,3))
-        AUCell::AUCell_plotTSNE(dr_coords, cellsAUC=selectRegulons(seuratreactive$regulonAUC, input$Regulon_Select))
-        
-        dev.off()
-      }
-      
-      else if (input$downloadRegulonClusterSCENICFile == "bmp") {
-        bmp(filename = file, width = input$downloadRegulonClusterSCENICWidth, height = input$downloadRegulonClusterSCENICHeight,
-            units = "mm", pointsize = 12, bg = "white", res = 600)
-        
-        dr_coords <- Embeddings(seuratreactive$obj, reduction="umap")
-        dr_coords <- dr_coords[,1:2]
-        
-        par(mfrow=c(1,3))
-        AUCell::AUCell_plotTSNE(dr_coords, cellsAUC=selectRegulons(seuratreactive$regulonAUC, input$Regulon_Select))
-        
-        dev.off()
-      }
-    }
-  )
-  
-  observeEvent(input$downloadRegulonClusterSCENIC2, {
-    showModal(modalDialog(
-      title = strong("Download Regulon Cluster Expression (t-SNE)"),
-      numericInput("downloadRegulonClusterSCENICHeight2", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Height of plot (mm)')),
-                   value = "480",
-                   min = "0",
-                   max = "1000"),
-      numericInput("downloadRegulonClusterSCENICWidth2", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Width of plot (mm)')),
-                   value = "480",
-                   min = "0",
-                   max = "1000"),
-      virtualSelectInput("downloadRegulonClusterSCENICFile2", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select type of file format')),
-                         choices = c("jpeg", "tiff", "png", "bmp"),
-                         selected = "png"),
-      downloadBttn("downloadRegulonClusterSCENICOutput2", "Download"),
-      size = "s",
-      easyClose = TRUE,
-      footer = NULL
-    ))
-  })
-  
-  output$downloadRegulonClusterSCENICOutput2 <- downloadHandler(
-    filename = function() {
-      paste(paste(levels(as.factor(seuratreactive$obj@meta.data$orig.ident)), collapse = "_"), "_RegulonClusterExpressionTSNE.", input$downloadRegulonClusterSCENICFile2, sep = "")
-    }, 
-    
-    content = function(file) {
-      
-      if (input$downloadRegulonClusterSCENICFile2 == "png") {
-        
-        png(filename = file, width = input$downloadRegulonClusterSCENICWidth2, height = input$downloadRegulonClusterSCENICHeight2,
-            units = "mm", pointsize = 12, bg = "white", res = 600)
-        
-        dr_coords <- Embeddings(seuratreactive$obj, reduction="tsne")
-        dr_coords <- dr_coords[,1:2]
-        
-        par(mfrow=c(1,3))
-        AUCell::AUCell_plotTSNE(dr_coords, cellsAUC=selectRegulons(seuratreactive$regulonAUC, input$Regulon_Select))
-        
-        dev.off()
-      }
-      
-      else if (input$downloadRegulonClusterSCENICFile2 == "jpeg") {
-        jpeg(filename = file, width = input$downloadRegulonClusterSCENICWidth2, height = input$downloadRegulonClusterSCENICHeight2,
-             units = "mm", pointsize = 12, bg = "white", res = 600)
-        
-        dr_coords <- Embeddings(seuratreactive$obj, reduction="tsne")
-        dr_coords <- dr_coords[,1:2]
-        
-        par(mfrow=c(1,3))
-        AUCell::AUCell_plotTSNE(dr_coords, cellsAUC=selectRegulons(seuratreactive$regulonAUC, input$Regulon_Select))
-        
-        dev.off()
-      }
-      
-      else if (input$downloadRegulonClusterSCENICFile2 == "tiff") {
-        tiff(filename = file, width = input$downloadRegulonClusterSCENICWidth2, height = input$downloadRegulonClusterSCENICHeight2,
-             units = "mm", pointsize = 12, bg = "white", res = 600)
-        
-        dr_coords <- Embeddings(seuratreactive$obj, reduction="tsne")
-        dr_coords <- dr_coords[,1:2]
-        
-        par(mfrow=c(1,3))
-        AUCell::AUCell_plotTSNE(dr_coords, cellsAUC=selectRegulons(seuratreactive$regulonAUC, input$Regulon_Select))
-        
-        dev.off()
-      }
-      
-      else if (input$downloadRegulonClusterSCENICFile2 == "bmp") {
-        bmp(filename = file, width = input$downloadRegulonClusterSCENICWidth2, height = input$downloadRegulonClusterSCENICHeight2,
-            units = "mm", pointsize = 12, bg = "white", res = 600)
-        
-        dr_coords <- Embeddings(seuratreactive$obj, reduction="tsne")
-        dr_coords <- dr_coords[,1:2]
-        
-        par(mfrow=c(1,3))
-        AUCell::AUCell_plotTSNE(dr_coords, cellsAUC=selectRegulons(seuratreactive$regulonAUC, input$Regulon_Select))
-        
-        dev.off()
-      }
     }
   )
   
@@ -7973,15 +7869,17 @@ server <- function(input, output, session) {
     
     content = function(file) {
       
-       p <- plot_cells(
-          cds = seuratreactive$seurat_monocle,
-          color_cells_by = "pseudotime",
-          reduction_method = "UMAP",
-          cell_size = input$sizemonocleTA/4,
-          graph_label_size = input$sizemonocleTA,
-          alpha = input$opacitymonocleTA
-        ) + theme(text = element_text(size=input$labelsizemonocleTA))
-       
+      p <- plot_cells(
+        cds = seuratreactive$seurat_monocle,
+        color_cells_by = "pseudotime",
+        reduction_method = "UMAP",
+        cell_size = input$sizemonocleTA/4,
+        graph_label_size = input$sizemonocleTA,
+        alpha = input$opacitymonocleTA
+      ) + theme(text = element_text(size=input$labelsizemonocleTA),
+                axis.text.x= element_text(size = input$labelsizemonocleTA),
+                axis.text.y= element_text(size = input$labelsizemonocleTA))
+      
       ggsave(file, plot = p,
              width = input$downloadUMAPmonocleWidth,
              height = input$downloadUMAPmonocleHeight,
@@ -10989,14 +10887,15 @@ server <- function(input, output, session) {
                      paste("<h4>Dimensionality Reduction </h4>",
                            "Number of variable features incoporated: ", paste(seuratreactive$variablefeatures), "<br>",
                            "Normalization method: ", paste(seuratreactive$SCTransformDR), "<br>",
+                           "Number of Dimensions: ", paste(seuratreactive$npcDR), "<br>",
                            "Imputed dropouts: ", paste(seuratreactive$ALRAL)),
                      ifelse(!is.null(seuratreactive$VFintegrated),
                             paste("<h4>Dimensionality Reduction </h4>",
                                   "Number of variable features incoporated: ", paste(seuratreactive$VFintegrated), "<br>",
                                   "Normalization method: ", paste(seuratreactive$SCTransformDR2), "<br>",
+                                  "Number of Dimensions: ", paste(seuratreactive$npcDR2), "<br>",
                                   "Integration method: ", paste(seuratreactive$integrationreduction), "<br>",
-                                  "Strength of integration: ", paste(seuratreactive$kanchor), "<br>",
-                                  "Imputed dropouts: ", paste(seuratreactive$ALRAL2)),
+                                  "Strength of integration: ", paste(seuratreactive$kanchor)),
                             paste("<h4> Dimensionality Reduction was not completed </h4>"))
     )
     
@@ -11087,21 +10986,21 @@ server <- function(input, output, session) {
     strSCENIC <- ifelse (is.null(seuratreactive$regulons),
                          paste("<h4>Gene Regulatory Network Construction was not completed </h4>"),
                          ifelse (seuratreactive$SCENIC_selectmethod == "Variable Genes",
-                         paste("<h4>Gene Regulatory Network Construction </h4>",
-                               "Method of input: ", paste(seuratreactive$SCENIC_selectmethod), "<br>",
-                               "Number of variable genes: ", paste(seuratreactive$variablegenesSCENIC), "<br>",
-                               "Dataset analysed: ", paste(seuratreactive$SCENIC_samples, collapse = ","), "<br>",
-                               "<b>Regulon Construction settings (SCENIC options): </b>", "<br>",
-                               "Database used: ", paste(seuratreactive$SCENICdb), "<br>",
-                               "Downsample SCENIC analysis to X cells per cluster/cell type (randomly selected): ", paste(seuratreactive$n_SCENIC, "cells")
-                         ),
-                         paste("<h4>Gene Regulatory Network Construction </h4>",
-                               "Method of input: ", paste(seuratreactive$SCENIC_selectmethod), "<br>",
-                               "Dataset analysed: ", paste(seuratreactive$SCENIC_samples, collapse = ","), "<br>",
-                               "<b>Regulon Construction settings (SCENIC options): </b>", "<br>",
-                               "Database used: ", paste(seuratreactive$SCENICdb), "<br>",
-                               "Downsample SCENIC analysis to X cells per cluster/cell type (randomly selected): ", paste(seuratreactive$n_SCENIC, "cells")
-                         ))
+                                 paste("<h4>Gene Regulatory Network Construction </h4>",
+                                       "Method of input: ", paste(seuratreactive$SCENIC_selectmethod), "<br>",
+                                       "Number of variable genes: ", paste(seuratreactive$variablegenesSCENIC), "<br>",
+                                       "Dataset analysed: ", paste(seuratreactive$SCENIC_samples, collapse = ","), "<br>",
+                                       "<b>Regulon Construction settings (SCENIC options): </b>", "<br>",
+                                       "Database used: ", paste(seuratreactive$SCENICdb), "<br>",
+                                       "Downsample SCENIC analysis to X cells per cluster/cell type (randomly selected): ", paste(seuratreactive$n_SCENIC, "cells")
+                                 ),
+                                 paste("<h4>Gene Regulatory Network Construction </h4>",
+                                       "Method of input: ", paste(seuratreactive$SCENIC_selectmethod), "<br>",
+                                       "Dataset analysed: ", paste(seuratreactive$SCENIC_samples, collapse = ","), "<br>",
+                                       "<b>Regulon Construction settings (SCENIC options): </b>", "<br>",
+                                       "Database used: ", paste(seuratreactive$SCENICdb), "<br>",
+                                       "Downsample SCENIC analysis to X cells per cluster/cell type (randomly selected): ", paste(seuratreactive$n_SCENIC, "cells")
+                                 ))
     )
     
     strMAGMA <- ifelse (is.null(seuratreactive$MAGMA_Final_Results),
@@ -11172,6 +11071,7 @@ server <- function(input, output, session) {
                                    "<b>Differential Expression test parameters </b> <br>",
                                    "Test selected: ", seuratreactive$testuseDE, "<br>",
                                    "Log2 fold change threshold: ", seuratreactive$logDE, "<br>",
+                                   "Report only upregulated genes: ", seuratreactive$onlyposDE, "<br>",
                                    "p-value adjustment method: ", seuratreactive$padjustDE1, "<br>",
                                    "p-value threshold: ", seuratreactive$pvalDE, "<br>",
                                    "Only test genes that are detected in a minimum fraction of cells (min.pct): ", seuratreactive$minDE, "<br>",
@@ -11190,6 +11090,7 @@ server <- function(input, output, session) {
                                    "<b>Differential Expression test parameters </b> <br>",
                                    "Test selected: ", seuratreactive$testuseDE, "<br>",
                                    "Log2 fold change threshold: ", seuratreactive$logDE, "<br>",
+                                   "Report only upregulated genes: ", seuratreactive$onlyposDE, "<br>",
                                    "p-value adjustment method: ", seuratreactive$padjustDE1, "<br>",
                                    "p-value threshold: ", seuratreactive$pvalDE, "<br>",
                                    "Only test genes that are detected in a minimum fraction of cells (min.pct): ", seuratreactive$minDE, "<br>",
@@ -11213,6 +11114,7 @@ server <- function(input, output, session) {
                             "<b>Differential Expression test parameters </b> <br>",
                             "Test selected: ", seuratreactive$testuseSDE, "<br>",
                             "Log2 fold change threshold: ", seuratreactive$logSDE, "<br>",
+                            "Report only upregulated genes: ", seuratreactive$onlyposSDE, "<br>",
                             "p-value adjustment method: ", seuratreactive$padjustSDE1, "<br>",
                             "p-value threshold: ", seuratreactive$pvalSDE, "<br>",
                             "Only test genes that are detected in a minimum fraction of cells (min.pct): ", seuratreactive$minSDE, "<br>",
@@ -11268,7 +11170,6 @@ server <- function(input, output, session) {
                        return(NULL)
                      }
                      
-                     library(scCustomize)
                      library(MAST)
                      library(DESeq2)
                      library(BiocParallel)
@@ -11389,6 +11290,7 @@ server <- function(input, output, session) {
                      seuratreactive$variablefeatures <- NULL
                      seuratreactive$SCTransformDR <- NULL
                      seuratreactive$ALRAL <- NULL
+                     seuratreactive$npcDR <- NULL
                      
                      #DR2
                      seuratreactive$Combined.list <- NULL
@@ -11396,7 +11298,7 @@ server <- function(input, output, session) {
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
                      seuratreactive$SCTransformDR2 <- NULL
-                     seuratreactive$ALRAL2 <- NULL
+                     seuratreactive$npcDR2 <- NULL
                      
                      #C
                      seuratreactive$integera <- NULL
@@ -11512,6 +11414,7 @@ server <- function(input, output, session) {
                      seuratreactive$plot.dataMM <- NULL
                      
                      #DE
+                     seuratreactive$onlyposDE <- NULL
                      seuratreactive$Subset_GENES <- NULL
                      seuratreactive$DE_clusters_samples <- NULL
                      seuratreactive$DECluster <- NULL
@@ -11552,6 +11455,7 @@ server <- function(input, output, session) {
                      seuratreactive$DRUGdf <- NULL
                      
                      #SDE
+                     seuratreactive$onlyposSDE <- NULL
                      seuratreactive$Subset_GENESSDE <- NULL
                      seuratreactive$selectedkey1 <- NULL
                      seuratreactive$selectedkey2 <- NULL
@@ -11728,7 +11632,6 @@ server <- function(input, output, session) {
                      shinyjs::hide("SCENICBox1")
                      shinyjs::hide("SCENICBox2")
                      shinyjs::hide("SCENICBox3")
-                     shinyjs::hide("SCENICBox4")
                      
                      #MAGMA
                      if (input$iscollapseboxMAGMA == TRUE) {
@@ -12000,6 +11903,7 @@ server <- function(input, output, session) {
                          seuratreactive$obj <- Final_Seurat_Object
                          seuratreactive$variablefeatures <- variablefeatures
                          seuratreactive$SCTransformDR <- SCTransformDR
+                         seuratreactive$npcDR <- npcDR
                          seuratreactive$ALRAL <- ALRAL
                        }
                      }
@@ -12028,7 +11932,7 @@ server <- function(input, output, session) {
                          seuratreactive$integrationreduction <- integrationreduction
                          seuratreactive$kanchor <- kanchor
                          seuratreactive$SCTransformDR2 <- SCTransformDR2
-                         seuratreactive$ALRAL2 <- ALRAL2
+                         seuratreactive$npcDR2 <- npcDR2
                        }
                      }
                      
@@ -12154,7 +12058,6 @@ server <- function(input, output, session) {
                          shinyjs::show("SCENICBox1")
                          shinyjs::show("SCENICBox2")
                          shinyjs::show("SCENICBox3")
-                         shinyjs::show("SCENICBox4")
                          
                          seuratreactive$variablefeaturesSCENIC <- variablefeaturesSCENIC
                          seuratreactive$variablegenesSCENIC <- variablegenesSCENIC
@@ -12340,6 +12243,7 @@ server <- function(input, output, session) {
                            }
                          }
                          
+                         seuratreactive$onlyposDE <- onlyposDE
                          seuratreactive$DE_clusters_samples <- DifferentialExpression_clusters_BetweenSampleComparison
                          seuratreactive$DECluster <- DifferentialExpression_ClusterOfInterest_BetweenSampleComparison
                          seuratreactive$DEInput1_samples <- DifferentialExpression_SampleOfInterest1_BetweenSampleComparison
@@ -12437,6 +12341,7 @@ server <- function(input, output, session) {
                            }
                          }
                          
+                         seuratreactive$onlyposSDE <- onlyposSDE
                          seuratreactive$selectedkey1 <- selectedcells_lasso1
                          seuratreactive$selectedkey2 <- selectedcells_lasso2
                          seuratreactive$GOlabelsSDE <- GOlabelsSDE
@@ -13239,7 +13144,7 @@ server <- function(input, output, session) {
                                                                             menuItem("Logs", icon = icon("newspaper"), tabName = "Logs", selected = F)))
                          }
                        }
-                         incProgress(0.8)
+                       incProgress(0.8)
                      }
                      
                      if (!is.null(seuratreactive$MM)) {
@@ -13343,6 +13248,7 @@ server <- function(input, output, session) {
                        updatePickerInput(session, 'padjustDE', selected = paste(seuratreactive$padjustDE))
                        updateSliderInput(session, 'logvolcano', value = c(paste(seuratreactive$volcanovalue1), paste(seuratreactive$volcanovalue2)))
                        updateNumericInput(session, 'pvolcano', value = paste(seuratreactive$pvaluevolcano))
+                       updateMaterialSwitch(session, 'onlyposDE', value = seuratreactive$onlyposDE)
                        
                        if (is.null(seuratreactive$objQC2)) {
                          if (is.null(seuratreactive$VFintegrated)) {
@@ -13840,6 +13746,7 @@ server <- function(input, output, session) {
                        updatePickerInput(session, 'padjustSDE', selected = paste(seuratreactive$padjustSDE))
                        updateSliderInput(session, 'logvolcanoSDE', value = c(paste(seuratreactive$volcanoSDEvalue1), paste(seuratreactive$volcanoSDEvalue2)))
                        updateNumericInput(session, 'pvolcanoSDE', value = paste(seuratreactive$pvaluevolcanoSDE))
+                       updateMaterialSwitch(session, 'onlyposSDE', value = seuratreactive$onlyposSDE)
                        
                        if (is.null(seuratreactive$objQC2)) {
                          if (is.null(seuratreactive$VFintegrated)) {
@@ -14542,6 +14449,7 @@ server <- function(input, output, session) {
                        seuratreactive$SCTransformDR <- NULL
                        seuratreactive$variablefeatures <- NULL
                        seuratreactive$ALRAL <- NULL
+                       seuratreactive$npcDR <- NULL
                        
                        
                        #DR2
@@ -14552,7 +14460,7 @@ server <- function(input, output, session) {
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
                        seuratreactive$SCTransformDR2 <- NULL
-                       seuratreactive$ALRAL2 <- NULL
+                       seuratreactive$npcDR2 <- NULL
                        
                        #C
                        
@@ -14681,6 +14589,7 @@ server <- function(input, output, session) {
                        seuratreactive$plot.dataMM <- NULL
                        
                        #DE
+                       seuratreactive$onlyposDE <- NULL
                        seuratreactive$Subset_GENES <- NULL
                        seuratreactive$DE_clusters_samples <- NULL
                        seuratreactive$DECluster <- NULL
@@ -14708,6 +14617,7 @@ server <- function(input, output, session) {
                        seuratreactive$PATHWAY <- NULL
                        
                        #SDE
+                       seuratreactive$onlyposSDE <- NULL
                        seuratreactive$Subset_GENESSDE <- NULL
                        seuratreactive$selectedkey1 <- NULL
                        seuratreactive$selectedkey2 <- NULL
@@ -14884,17 +14794,18 @@ server <- function(input, output, session) {
                        #DR
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
+                       seuratreactive$npcDR <- NULL
                        seuratreactive$variablefeatures <- NULL
                        seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
-                       seuratreactive$ALRAL2 <- NULL
                        seuratreactive$Combined.list <- NULL
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
                        seuratreactive$SCTransformDR2 <- NULL
+                       seuratreactive$npcDR2 <- NULL
                        
                        #C
                        
@@ -15023,6 +14934,7 @@ server <- function(input, output, session) {
                        seuratreactive$plot.dataMM <- NULL
                        
                        #DE
+                       seuratreactive$onlyposDE <- NULL
                        seuratreactive$Subset_GENES <- NULL
                        seuratreactive$DE_clusters_samples <- NULL
                        seuratreactive$DECluster <- NULL
@@ -15053,7 +14965,7 @@ server <- function(input, output, session) {
                        seuratreactive$Subset_GENESSDE <- NULL
                        seuratreactive$selectedkey1 <- NULL
                        seuratreactive$selectedkey2 <- NULL
-                       
+                       seuratreactive$onlyposSDE <- NULL
                        seuratreactive$GOlabelsSDE <- NULL
                        seuratreactive$logSDE <- NULL
                        seuratreactive$minSDE <- NULL
@@ -15211,20 +15123,20 @@ server <- function(input, output, session) {
                        #DR
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
+                       seuratreactive$npcDR <- NULL
                        seuratreactive$variablefeatures <- NULL
                        seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR2 <- NULL
+                       seuratreactive$npcDR2 <- NULL
                        seuratreactive$Combined.list <- NULL
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
-                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
-                       
                        seuratreactive$integera <- NULL
                        seuratreactive$integerb <- NULL
                        seuratreactive$integerc <- NULL
@@ -15350,6 +15262,7 @@ server <- function(input, output, session) {
                        seuratreactive$plot.dataMM <- NULL
                        
                        #DE
+                       seuratreactive$onlyposDE <- NULL
                        seuratreactive$Subset_GENES <- NULL
                        seuratreactive$DE_clusters_samples <- NULL
                        seuratreactive$DECluster <- NULL
@@ -15380,7 +15293,7 @@ server <- function(input, output, session) {
                        seuratreactive$Subset_GENESSDE <- NULL
                        seuratreactive$selectedkey1 <- NULL
                        seuratreactive$selectedkey2 <- NULL
-                       
+                       seuratreactive$onlyposSDE <- NULL
                        seuratreactive$GOlabelsSDE <- NULL
                        seuratreactive$logSDE <- NULL
                        seuratreactive$minSDE <- NULL
@@ -15516,20 +15429,20 @@ server <- function(input, output, session) {
                      #DR
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
+                     seuratreactive$npcDR <- NULL
                      seuratreactive$variablefeatures <- NULL
                      seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR2 <- NULL
+                     seuratreactive$npcDR2 <- NULL
                      seuratreactive$Combined.list <- NULL
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
-                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
-                     
                      seuratreactive$integera <- NULL
                      seuratreactive$integerb <- NULL
                      seuratreactive$integerc <- NULL
@@ -15655,6 +15568,7 @@ server <- function(input, output, session) {
                      seuratreactive$plot.dataMM <- NULL
                      
                      #DE
+                     seuratreactive$onlyposDE <- NULL
                      seuratreactive$Subset_GENES <- NULL
                      seuratreactive$DE_clusters_samples <- NULL
                      seuratreactive$DECluster <- NULL
@@ -15685,7 +15599,7 @@ server <- function(input, output, session) {
                      seuratreactive$Subset_GENESSDE <- NULL
                      seuratreactive$selectedkey1 <- NULL
                      seuratreactive$selectedkey2 <- NULL
-                     
+                     seuratreactive$onlyposSDE <- NULL
                      seuratreactive$GOlabelsSDE <- NULL
                      seuratreactive$logSDE <- NULL
                      seuratreactive$minSDE <- NULL
@@ -15811,19 +15725,19 @@ server <- function(input, output, session) {
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
                      seuratreactive$variablefeatures <- NULL
+                     seuratreactive$npcDR <- NULL
                      seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR2 <- NULL
+                     seuratreactive$npcDR2 <- NULL
                      seuratreactive$Combined.list <- NULL
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
-                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
-                     
                      seuratreactive$integera <- NULL
                      seuratreactive$integerb <- NULL
                      seuratreactive$integerc <- NULL
@@ -15949,6 +15863,7 @@ server <- function(input, output, session) {
                      seuratreactive$plot.dataMM <- NULL
                      
                      #DE
+                     seuratreactive$onlyposDE <- NULL
                      seuratreactive$Subset_GENES <- NULL
                      seuratreactive$DE_clusters_samples <- NULL
                      seuratreactive$DECluster <- NULL
@@ -15979,7 +15894,7 @@ server <- function(input, output, session) {
                      seuratreactive$Subset_GENESSDE <- NULL
                      seuratreactive$selectedkey1 <- NULL
                      seuratreactive$selectedkey2 <- NULL
-                     
+                     seuratreactive$onlyposSDE <- NULL
                      seuratreactive$GOlabelsSDE <- NULL
                      seuratreactive$logSDE <- NULL
                      seuratreactive$minSDE <- NULL
@@ -16104,20 +16019,20 @@ server <- function(input, output, session) {
                      #DR
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
+                     seuratreactive$npcDR <- NULL
                      seuratreactive$variablefeatures <- NULL
                      seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR2 <- NULL
+                     seuratreactive$npcDR2 <- NULL
                      seuratreactive$Combined.list <- NULL
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
-                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
-                     
                      seuratreactive$integera <- NULL
                      seuratreactive$integerb <- NULL
                      seuratreactive$integerc <- NULL
@@ -16243,6 +16158,7 @@ server <- function(input, output, session) {
                      seuratreactive$plot.dataMM <- NULL
                      
                      #DE
+                     seuratreactive$onlyposDE <- NULL
                      seuratreactive$Subset_GENES <- NULL
                      seuratreactive$DE_clusters_samples <- NULL
                      seuratreactive$DECluster <- NULL
@@ -16273,7 +16189,7 @@ server <- function(input, output, session) {
                      seuratreactive$Subset_GENESSDE <- NULL
                      seuratreactive$selectedkey1 <- NULL
                      seuratreactive$selectedkey2 <- NULL
-                     
+                     seuratreactive$onlyposSDE <- NULL
                      seuratreactive$GOlabelsSDE <- NULL
                      seuratreactive$logSDE <- NULL
                      seuratreactive$minSDE <- NULL
@@ -16398,20 +16314,20 @@ server <- function(input, output, session) {
                      #DR
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
+                     seuratreactive$npcDR <- NULL
                      seuratreactive$variablefeatures <- NULL
                      seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR2 <- NULL
+                     seuratreactive$npcDR2 <- NULL
                      seuratreactive$Combined.list <- NULL
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
-                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
-                     
                      seuratreactive$integera <- NULL
                      seuratreactive$integerb <- NULL
                      seuratreactive$integerc <- NULL
@@ -16537,6 +16453,7 @@ server <- function(input, output, session) {
                      seuratreactive$plot.dataMM <- NULL
                      
                      #DE
+                     seuratreactive$onlyposDE <- NULL
                      seuratreactive$Subset_GENES <- NULL
                      seuratreactive$DE_clusters_samples <- NULL
                      seuratreactive$DECluster <- NULL
@@ -16567,7 +16484,7 @@ server <- function(input, output, session) {
                      seuratreactive$Subset_GENESSDE <- NULL
                      seuratreactive$selectedkey1 <- NULL
                      seuratreactive$selectedkey2 <- NULL
-                     
+                     seuratreactive$onlyposSDE <- NULL
                      seuratreactive$GOlabelsSDE <- NULL
                      seuratreactive$logSDE <- NULL
                      seuratreactive$minSDE <- NULL
@@ -16723,20 +16640,20 @@ server <- function(input, output, session) {
                        #DR
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
+                       seuratreactive$npcDR <- NULL
                        seuratreactive$variablefeatures <- NULL
                        seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR2 <- NULL
+                       seuratreactive$npcDR2 <- NULL
                        seuratreactive$Combined.list <- NULL
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
-                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
-                       
                        seuratreactive$integera <- NULL
                        seuratreactive$integerb <- NULL
                        seuratreactive$integerc <- NULL
@@ -16862,6 +16779,7 @@ server <- function(input, output, session) {
                        seuratreactive$plot.dataMM <- NULL
                        
                        #DE
+                       seuratreactive$onlyposDE <- NULL
                        seuratreactive$Subset_GENES <- NULL
                        seuratreactive$DE_clusters_samples <- NULL
                        seuratreactive$DECluster <- NULL
@@ -16892,7 +16810,7 @@ server <- function(input, output, session) {
                        seuratreactive$Subset_GENESSDE <- NULL
                        seuratreactive$selectedkey1 <- NULL
                        seuratreactive$selectedkey2 <- NULL
-                       
+                       seuratreactive$onlyposSDE <- NULL
                        seuratreactive$GOlabelsSDE <- NULL
                        seuratreactive$logSDE <- NULL
                        seuratreactive$minSDE <- NULL
@@ -17051,20 +16969,20 @@ server <- function(input, output, session) {
                        #DR
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
+                       seuratreactive$npcDR <- NULL
                        seuratreactive$variablefeatures <- NULL
                        seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR2 <- NULL
+                       seuratreactive$npcDR2 <- NULL
                        seuratreactive$Combined.list <- NULL
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
-                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
-                       
                        seuratreactive$integera <- NULL
                        seuratreactive$integerb <- NULL
                        seuratreactive$integerc <- NULL
@@ -17190,6 +17108,7 @@ server <- function(input, output, session) {
                        seuratreactive$plot.dataMM <- NULL
                        
                        #DE
+                       seuratreactive$onlyposDE <- NULL
                        seuratreactive$Subset_GENES <- NULL
                        seuratreactive$DE_clusters_samples <- NULL
                        seuratreactive$DECluster <- NULL
@@ -17220,7 +17139,7 @@ server <- function(input, output, session) {
                        seuratreactive$Subset_GENESSDE <- NULL
                        seuratreactive$selectedkey1 <- NULL
                        seuratreactive$selectedkey2 <- NULL
-                       
+                       seuratreactive$onlyposSDE <- NULL
                        seuratreactive$GOlabelsSDE <- NULL
                        seuratreactive$logSDE <- NULL
                        seuratreactive$minSDE <- NULL
@@ -17346,20 +17265,20 @@ server <- function(input, output, session) {
                      #DR
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
+                     seuratreactive$npcDR <- NULL
                      seuratreactive$variablefeatures <- NULL
                      seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR2 <- NULL
+                     seuratreactive$npcDR2 <- NULL
                      seuratreactive$Combined.list <- NULL
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
-                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
-                     
                      seuratreactive$integera <- NULL
                      seuratreactive$integerb <- NULL
                      seuratreactive$integerc <- NULL
@@ -17484,6 +17403,7 @@ server <- function(input, output, session) {
                      seuratreactive$plot.dataMM <- NULL
                      
                      #DE
+                     seuratreactive$onlyposDE <- NULL
                      seuratreactive$Subset_GENES <- NULL
                      seuratreactive$DE_clusters_samples <- NULL
                      seuratreactive$DECluster <- NULL
@@ -17514,7 +17434,7 @@ server <- function(input, output, session) {
                      seuratreactive$Subset_GENESSDE <- NULL
                      seuratreactive$selectedkey1 <- NULL
                      seuratreactive$selectedkey2 <- NULL
-                     
+                     seuratreactive$onlyposSDE <- NULL
                      seuratreactive$GOlabelsSDE <- NULL
                      seuratreactive$logSDE <- NULL
                      seuratreactive$minSDE <- NULL
@@ -17809,20 +17729,20 @@ server <- function(input, output, session) {
                        #DR
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
+                       seuratreactive$npcDR <- NULL
                        seuratreactive$variablefeatures <- NULL
                        seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR2 <- NULL
+                       seuratreactive$npcDR2 <- NULL
                        seuratreactive$Combined.list <- NULL
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
-                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
-                       
                        seuratreactive$integera <- NULL
                        seuratreactive$integerb <- NULL
                        seuratreactive$integerc <- NULL
@@ -17947,6 +17867,7 @@ server <- function(input, output, session) {
                        seuratreactive$plot.dataMM <- NULL
                        
                        #DE
+                       seuratreactive$onlyposDE <- NULL
                        seuratreactive$Subset_GENES <- NULL
                        seuratreactive$DE_clusters_samples <- NULL
                        seuratreactive$DECluster <- NULL
@@ -17977,7 +17898,7 @@ server <- function(input, output, session) {
                        seuratreactive$Subset_GENESSDE <- NULL
                        seuratreactive$selectedkey1 <- NULL
                        seuratreactive$selectedkey2 <- NULL
-                       
+                       seuratreactive$onlyposSDE <- NULL
                        seuratreactive$GOlabelsSDE <- NULL
                        seuratreactive$logSDE <- NULL
                        seuratreactive$minSDE <- NULL
@@ -18135,20 +18056,20 @@ server <- function(input, output, session) {
                        #DR
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
+                       seuratreactive$npcDR <- NULL
                        seuratreactive$variablefeatures <- NULL
                        seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR2 <- NULL
+                       seuratreactive$npcDR2 <- NULL
                        seuratreactive$Combined.list <- NULL
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
-                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
-                       
                        seuratreactive$integera <- NULL
                        seuratreactive$integerb <- NULL
                        seuratreactive$integerc <- NULL
@@ -18274,6 +18195,7 @@ server <- function(input, output, session) {
                        seuratreactive$plot.dataMM <- NULL
                        
                        #DE
+                       seuratreactive$onlyposDE <- NULL
                        seuratreactive$Subset_GENES <- NULL
                        seuratreactive$DE_clusters_samples <- NULL
                        seuratreactive$DECluster <- NULL
@@ -18304,7 +18226,7 @@ server <- function(input, output, session) {
                        seuratreactive$Subset_GENESSDE <- NULL
                        seuratreactive$selectedkey1 <- NULL
                        seuratreactive$selectedkey2 <- NULL
-                       
+                       seuratreactive$onlyposSDE <- NULL
                        seuratreactive$GOlabelsSDE <- NULL
                        seuratreactive$logSDE <- NULL
                        seuratreactive$minSDE <- NULL
@@ -18449,20 +18371,20 @@ server <- function(input, output, session) {
                        #DR
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
+                       seuratreactive$npcDR <- NULL
                        seuratreactive$variablefeatures <- NULL
                        seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR2 <- NULL
+                       seuratreactive$npcDR2 <- NULL
                        seuratreactive$Combined.list <- NULL
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
-                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
-                       
                        seuratreactive$integera <- NULL
                        seuratreactive$integerb <- NULL
                        seuratreactive$integerc <- NULL
@@ -18588,6 +18510,7 @@ server <- function(input, output, session) {
                        seuratreactive$plot.dataMM <- NULL
                        
                        #DE
+                       seuratreactive$onlyposDE <- NULL
                        seuratreactive$Subset_GENES <- NULL
                        seuratreactive$DE_clusters_samples <- NULL
                        seuratreactive$DECluster <- NULL
@@ -18618,7 +18541,7 @@ server <- function(input, output, session) {
                        seuratreactive$Subset_GENESSDE <- NULL
                        seuratreactive$selectedkey1 <- NULL
                        seuratreactive$selectedkey2 <- NULL
-                       
+                       seuratreactive$onlyposSDE <- NULL
                        seuratreactive$GOlabelsSDE <- NULL
                        seuratreactive$logSDE <- NULL
                        seuratreactive$minSDE <- NULL
@@ -18734,20 +18657,20 @@ server <- function(input, output, session) {
                      #DR
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
+                     seuratreactive$npcDR <- NULL
                      seuratreactive$variablefeatures <- NULL
                      seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR2 <- NULL
+                     seuratreactive$npcDR2 <- NULL
                      seuratreactive$Combined.list <- NULL
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
-                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
-                     
                      seuratreactive$integera <- NULL
                      seuratreactive$integerb <- NULL
                      seuratreactive$integerc <- NULL
@@ -18873,6 +18796,7 @@ server <- function(input, output, session) {
                      seuratreactive$plot.dataMM <- NULL
                      
                      #DE
+                     seuratreactive$onlyposDE <- NULL
                      seuratreactive$Subset_GENES <- NULL
                      seuratreactive$DE_clusters_samples <- NULL
                      seuratreactive$DECluster <- NULL
@@ -18903,7 +18827,7 @@ server <- function(input, output, session) {
                      seuratreactive$Subset_GENESSDE <- NULL
                      seuratreactive$selectedkey1 <- NULL
                      seuratreactive$selectedkey2 <- NULL
-                     
+                     seuratreactive$onlyposSDE <- NULL
                      seuratreactive$GOlabelsSDE <- NULL
                      seuratreactive$logSDE <- NULL
                      seuratreactive$minSDE <- NULL
@@ -19013,20 +18937,20 @@ server <- function(input, output, session) {
                      #DR
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
+                     seuratreactive$npcDR <- NULL
                      seuratreactive$variablefeatures <- NULL
                      seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR2 <- NULL
+                     seuratreactive$npcDR2 <- NULL
                      seuratreactive$Combined.list <- NULL
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
-                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
-                     
                      seuratreactive$integera <- NULL
                      seuratreactive$integerb <- NULL
                      seuratreactive$integerc <- NULL
@@ -19152,6 +19076,7 @@ server <- function(input, output, session) {
                      seuratreactive$plot.dataMM <- NULL
                      
                      #DE
+                     seuratreactive$onlyposDE <- NULL
                      seuratreactive$Subset_GENES <- NULL
                      seuratreactive$DE_clusters_samples <- NULL
                      seuratreactive$DECluster <- NULL
@@ -19182,7 +19107,7 @@ server <- function(input, output, session) {
                      seuratreactive$Subset_GENESSDE <- NULL
                      seuratreactive$selectedkey1 <- NULL
                      seuratreactive$selectedkey2 <- NULL
-                     
+                     seuratreactive$onlyposSDE <- NULL
                      seuratreactive$GOlabelsSDE <- NULL
                      seuratreactive$logSDE <- NULL
                      seuratreactive$minSDE <- NULL
@@ -19292,20 +19217,20 @@ server <- function(input, output, session) {
                      #DR
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
+                     seuratreactive$npcDR <- NULL
                      seuratreactive$variablefeatures <- NULL
                      seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR2 <- NULL
+                     seuratreactive$npcDR2 <- NULL
                      seuratreactive$Combined.list <- NULL
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
-                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
-                     
                      seuratreactive$integera <- NULL
                      seuratreactive$integerb <- NULL
                      seuratreactive$integerc <- NULL
@@ -19431,6 +19356,7 @@ server <- function(input, output, session) {
                      seuratreactive$plot.dataMM <- NULL
                      
                      #DE
+                     seuratreactive$onlyposDE <- NULL
                      seuratreactive$Subset_GENES <- NULL
                      seuratreactive$DE_clusters_samples <- NULL
                      seuratreactive$DECluster <- NULL
@@ -19461,7 +19387,7 @@ server <- function(input, output, session) {
                      seuratreactive$Subset_GENESSDE <- NULL
                      seuratreactive$selectedkey1 <- NULL
                      seuratreactive$selectedkey2 <- NULL
-                     
+                     seuratreactive$onlyposSDE <- NULL
                      seuratreactive$GOlabelsSDE <- NULL
                      seuratreactive$logSDE <- NULL
                      seuratreactive$minSDE <- NULL
@@ -19571,20 +19497,20 @@ server <- function(input, output, session) {
                      #DR
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
+                     seuratreactive$npcDR <- NULL
                      seuratreactive$variablefeatures <- NULL
                      seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR2 <- NULL
+                     seuratreactive$npcDR2 <- NULL
                      seuratreactive$Combined.list <- NULL
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
-                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
-                     
                      seuratreactive$integera <- NULL
                      seuratreactive$integerb <- NULL
                      seuratreactive$integerc <- NULL
@@ -19710,6 +19636,7 @@ server <- function(input, output, session) {
                      seuratreactive$plot.dataMM <- NULL
                      
                      #DE
+                     seuratreactive$onlyposDE <- NULL
                      seuratreactive$Subset_GENES <- NULL
                      seuratreactive$DE_clusters_samples <- NULL
                      seuratreactive$DECluster <- NULL
@@ -19740,7 +19667,7 @@ server <- function(input, output, session) {
                      seuratreactive$Subset_GENESSDE <- NULL
                      seuratreactive$selectedkey1 <- NULL
                      seuratreactive$selectedkey2 <- NULL
-                     
+                     seuratreactive$onlyposSDE <- NULL
                      seuratreactive$GOlabelsSDE <- NULL
                      seuratreactive$logSDE <- NULL
                      seuratreactive$minSDE <- NULL
@@ -19878,20 +19805,20 @@ server <- function(input, output, session) {
                        #DR
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
+                       seuratreactive$npcDR <- NULL
                        seuratreactive$variablefeatures <- NULL
                        seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR2 <- NULL
+                       seuratreactive$npcDR2 <- NULL
                        seuratreactive$Combined.list <- NULL
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
-                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
-                       
                        seuratreactive$integera <- NULL
                        seuratreactive$integerb <- NULL
                        seuratreactive$integerc <- NULL
@@ -20017,6 +19944,7 @@ server <- function(input, output, session) {
                        seuratreactive$plot.dataMM <- NULL
                        
                        #DE
+                       seuratreactive$onlyposDE <- NULL
                        seuratreactive$Subset_GENES <- NULL
                        seuratreactive$DE_clusters_samples <- NULL
                        seuratreactive$DECluster <- NULL
@@ -20047,7 +19975,7 @@ server <- function(input, output, session) {
                        seuratreactive$Subset_GENESSDE <- NULL
                        seuratreactive$selectedkey1 <- NULL
                        seuratreactive$selectedkey2 <- NULL
-                       
+                       seuratreactive$onlyposSDE <- NULL
                        seuratreactive$GOlabelsSDE <- NULL
                        seuratreactive$logSDE <- NULL
                        seuratreactive$minSDE <- NULL
@@ -20187,20 +20115,20 @@ server <- function(input, output, session) {
                        #DR
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR <- NULL
+                       seuratreactive$npcDR <- NULL
                        seuratreactive$variablefeatures <- NULL
                        seuratreactive$ALRAL <- NULL
                        
                        #DR2
                        seuratreactive$obj <- NULL
                        seuratreactive$SCTransformDR2 <- NULL
+                       seuratreactive$npcDR2 <- NULL
                        seuratreactive$Combined.list <- NULL
                        seuratreactive$VFintegrated <- NULL
                        seuratreactive$integrationreduction <- NULL
                        seuratreactive$kanchor <- NULL
-                       seuratreactive$ALRAL2 <- NULL
                        
                        #C
-                       
                        seuratreactive$integera <- NULL
                        seuratreactive$integerb <- NULL
                        seuratreactive$integerc <- NULL
@@ -20326,6 +20254,7 @@ server <- function(input, output, session) {
                        seuratreactive$plot.dataMM <- NULL
                        
                        #DE
+                       seuratreactive$onlyposDE <- NULL
                        seuratreactive$Subset_GENES <- NULL
                        seuratreactive$DE_clusters_samples <- NULL
                        seuratreactive$DECluster <- NULL
@@ -20356,7 +20285,7 @@ server <- function(input, output, session) {
                        seuratreactive$Subset_GENESSDE <- NULL
                        seuratreactive$selectedkey1 <- NULL
                        seuratreactive$selectedkey2 <- NULL
-                       
+                       seuratreactive$onlyposSDE <- NULL
                        seuratreactive$GOlabelsSDE <- NULL
                        seuratreactive$logSDE <- NULL
                        seuratreactive$minSDE <- NULL
@@ -20467,20 +20396,20 @@ server <- function(input, output, session) {
                      #DR
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR <- NULL
+                     seuratreactive$npcDR <- NULL
                      seuratreactive$variablefeatures <- NULL
                      seuratreactive$ALRAL <- NULL
                      
                      #DR2
                      seuratreactive$obj <- NULL
                      seuratreactive$SCTransformDR2 <- NULL
+                     seuratreactive$npcDR2 <- NULL
                      seuratreactive$Combined.list <- NULL
                      seuratreactive$VFintegrated <- NULL
                      seuratreactive$integrationreduction <- NULL
                      seuratreactive$kanchor <- NULL
-                     seuratreactive$ALRAL2 <- NULL
                      
                      #C
-                     
                      seuratreactive$integera <- NULL
                      seuratreactive$integerb <- NULL
                      seuratreactive$integerc <- NULL
@@ -20606,6 +20535,7 @@ server <- function(input, output, session) {
                      seuratreactive$plot.dataMM <- NULL
                      
                      #DE
+                     seuratreactive$onlyposDE <- NULL
                      seuratreactive$Subset_GENES <- NULL
                      seuratreactive$DE_clusters_samples <- NULL
                      seuratreactive$DECluster <- NULL
@@ -20636,7 +20566,7 @@ server <- function(input, output, session) {
                      seuratreactive$Subset_GENESSDE <- NULL
                      seuratreactive$selectedkey1 <- NULL
                      seuratreactive$selectedkey2 <- NULL
-                     
+                     seuratreactive$onlyposSDE <- NULL
                      seuratreactive$GOlabelsSDE <- NULL
                      seuratreactive$logSDE <- NULL
                      seuratreactive$minSDE <- NULL
@@ -20840,11 +20770,15 @@ server <- function(input, output, session) {
     )
   })
   
+  output$plotUI <- renderUI({
+    plotOutput("plot", height = (400 + input$QCplotheight*40))
+  })
+  
   output$plot <- renderPlot({
     validate(
       need(!is.null(seuratreactive$objQC), "You must complete the quality control step"))
     VlnPlot(seuratreactive$objQC, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"), group.by = "orig.ident", pt.size = input$sizeQC, ncol = 2) 
-    })
+  })
   
   output$plot2 <- renderPlot({
     validate(
@@ -20910,20 +20844,20 @@ server <- function(input, output, session) {
       #DR
       seuratreactive$obj <- NULL
       seuratreactive$SCTransformDR <- NULL
+      seuratreactive$npcDR <- NULL
       seuratreactive$variablefeatures <- NULL
       seuratreactive$ALRAL <- NULL
       
       #DR2
       seuratreactive$obj <- NULL
       seuratreactive$SCTransformDR2 <- NULL
+      seuratreactive$npcDR2 <- NULL
       seuratreactive$Combined.list <- NULL
       seuratreactive$VFintegrated <- NULL
       seuratreactive$integrationreduction <- NULL
       seuratreactive$kanchor <- NULL
-      seuratreactive$ALRAL2 <- NULL
       
       #C
-      
       seuratreactive$integera <- NULL
       seuratreactive$integerb <- NULL
       seuratreactive$integerc <- NULL
@@ -21049,6 +20983,7 @@ server <- function(input, output, session) {
       seuratreactive$plot.dataMM <- NULL
       
       #DE
+      seuratreactive$onlyposDE <- NULL
       seuratreactive$Subset_GENES <- NULL
       seuratreactive$DE_clusters_samples <- NULL
       seuratreactive$DECluster <- NULL
@@ -21079,7 +21014,7 @@ server <- function(input, output, session) {
       seuratreactive$Subset_GENESSDE <- NULL
       seuratreactive$selectedkey1 <- NULL
       seuratreactive$selectedkey2 <- NULL
-      
+      seuratreactive$onlyposSDE <- NULL
       seuratreactive$GOlabelsSDE <- NULL
       seuratreactive$logSDE <- NULL
       seuratreactive$minSDE <- NULL
@@ -21347,6 +21282,10 @@ server <- function(input, output, session) {
     })
   })
   
+  output$plotdoublesimUI <- renderUI({
+    plotlyOutput("plotdoublesim", height = (400 + input$Dplotheight*40))
+  })
+  
   output$plotdoublesim <- renderPlotly({
     validate(
       need(!is.null(seuratreactive$plot.data.doublets), "Please select your estimated percentage of doublets and click SIMULATE DOUBLETS to begin the detection process"))
@@ -21438,20 +21377,20 @@ server <- function(input, output, session) {
     #DR
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR <- NULL
+    seuratreactive$npcDR <- NULL
     seuratreactive$variablefeatures <- NULL
     seuratreactive$ALRAL <- NULL
     
     #DR2
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR2 <- NULL
+    seuratreactive$npcDR2 <- NULL
     seuratreactive$Combined.list <- NULL
     seuratreactive$VFintegrated <- NULL
     seuratreactive$integrationreduction <- NULL
     seuratreactive$kanchor <- NULL
-    seuratreactive$ALRAL2 <- NULL
     
     #C
-    
     seuratreactive$integera <- NULL
     seuratreactive$integerb <- NULL
     seuratreactive$integerc <- NULL
@@ -21577,6 +21516,7 @@ server <- function(input, output, session) {
     seuratreactive$plot.dataMM <- NULL
     
     #DE
+    seuratreactive$onlyposDE <- NULL
     seuratreactive$Subset_GENES <- NULL
     seuratreactive$DE_clusters_samples <- NULL
     seuratreactive$DECluster <- NULL
@@ -21607,7 +21547,7 @@ server <- function(input, output, session) {
     seuratreactive$Subset_GENESSDE <- NULL
     seuratreactive$selectedkey1 <- NULL
     seuratreactive$selectedkey2 <- NULL
-    
+    seuratreactive$onlyposSDE <- NULL
     seuratreactive$GOlabelsSDE <- NULL
     seuratreactive$logSDE <- NULL
     seuratreactive$minSDE <- NULL
@@ -21738,20 +21678,20 @@ server <- function(input, output, session) {
     #DR
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR <- NULL
+    seuratreactive$npcDR <- NULL
     seuratreactive$variablefeatures <- NULL
     seuratreactive$ALRAL <- NULL
     
     #DR2
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR2 <- NULL
+    seuratreactive$npcDR2 <- NULL
     seuratreactive$Combined.list <- NULL
     seuratreactive$VFintegrated <- NULL
     seuratreactive$integrationreduction <- NULL
     seuratreactive$kanchor <- NULL
-    seuratreactive$ALRAL2 <- NULL
     
     #C
-    
     seuratreactive$integera <- NULL
     seuratreactive$integerb <- NULL
     seuratreactive$integerc <- NULL
@@ -21877,6 +21817,7 @@ server <- function(input, output, session) {
     seuratreactive$plot.dataMM <- NULL
     
     #DE
+    seuratreactive$onlyposDE <- NULL
     seuratreactive$Subset_GENES <- NULL
     seuratreactive$DE_clusters_samples <- NULL
     seuratreactive$DECluster <- NULL
@@ -21907,7 +21848,7 @@ server <- function(input, output, session) {
     seuratreactive$Subset_GENESSDE <- NULL
     seuratreactive$selectedkey1 <- NULL
     seuratreactive$selectedkey2 <- NULL
-    
+    seuratreactive$onlyposSDE <- NULL
     seuratreactive$GOlabelsSDE <- NULL
     seuratreactive$logSDE <- NULL
     seuratreactive$minSDE <- NULL
@@ -22022,20 +21963,20 @@ server <- function(input, output, session) {
     #DR
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR <- NULL
+    seuratreactive$npcDR <- NULL
     seuratreactive$variablefeatures <- NULL
     seuratreactive$ALRAL <- NULL
     
     #DR2
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR2 <- NULL
+    seuratreactive$npcDR2 <- NULL
     seuratreactive$Combined.list <- NULL
     seuratreactive$VFintegrated <- NULL
     seuratreactive$integrationreduction <- NULL
     seuratreactive$kanchor <- NULL
-    seuratreactive$ALRAL2 <- NULL
     
     #C
-    
     seuratreactive$integera <- NULL
     seuratreactive$integerb <- NULL
     seuratreactive$integerc <- NULL
@@ -22161,6 +22102,7 @@ server <- function(input, output, session) {
     seuratreactive$plot.dataMM <- NULL
     
     #DE
+    seuratreactive$onlyposDE <- NULL
     seuratreactive$Subset_GENES <- NULL
     seuratreactive$DE_clusters_samples <- NULL
     seuratreactive$DECluster <- NULL
@@ -22191,7 +22133,7 @@ server <- function(input, output, session) {
     seuratreactive$Subset_GENESSDE <- NULL
     seuratreactive$selectedkey1 <- NULL
     seuratreactive$selectedkey2 <- NULL
-    
+    seuratreactive$onlyposSDE <- NULL
     seuratreactive$GOlabelsSDE <- NULL
     seuratreactive$logSDE <- NULL
     seuratreactive$minSDE <- NULL
@@ -22370,8 +22312,11 @@ server <- function(input, output, session) {
     error = function(e) {
       shinyalert("ERROR!", "Selection parameters out of bounds, please re-select parameters.", type = "error", confirmButtonCol = "#337ab7")
     })  
-  }
-  )
+  })
+  
+  output$plotCombineUI <- renderUI({
+    plotOutput("plotCombine", height = (400 + input$QC2plotheight*40))
+  })
   
   output$plotCombine <- renderPlot({
     validate(
@@ -22418,20 +22363,20 @@ server <- function(input, output, session) {
       #DR
       seuratreactive$obj <- NULL
       seuratreactive$SCTransformDR <- NULL
+      seuratreactive$npcDR <- NULL
       seuratreactive$variablefeatures <- NULL
       seuratreactive$ALRAL <- NULL
       
       #DR2
       seuratreactive$obj <- NULL
       seuratreactive$SCTransformDR2 <- NULL
+      seuratreactive$npcDR2 <- NULL
       seuratreactive$Combined.list <- NULL
       seuratreactive$VFintegrated <- NULL
       seuratreactive$integrationreduction <- NULL
       seuratreactive$kanchor <- NULL
-      seuratreactive$ALRAL2 <- NULL
       
       #C
-      
       seuratreactive$integera <- NULL
       seuratreactive$integerb <- NULL
       seuratreactive$integerc <- NULL
@@ -22557,6 +22502,7 @@ server <- function(input, output, session) {
       seuratreactive$plot.dataMM <- NULL
       
       #DE
+      seuratreactive$onlyposDE <- NULL
       seuratreactive$Subset_GENES <- NULL
       seuratreactive$DE_clusters_samples <- NULL
       seuratreactive$DECluster <- NULL
@@ -22587,7 +22533,7 @@ server <- function(input, output, session) {
       seuratreactive$Subset_GENESSDE <- NULL
       seuratreactive$selectedkey1 <- NULL
       seuratreactive$selectedkey2 <- NULL
-      
+      seuratreactive$onlyposSDE <- NULL
       seuratreactive$GOlabelsSDE <- NULL
       seuratreactive$logSDE <- NULL
       seuratreactive$minSDE <- NULL
@@ -22858,6 +22804,10 @@ server <- function(input, output, session) {
     })
   })
   
+  output$plotdoublesim2UI <- renderUI({
+    plotlyOutput("plotdoublesim2", height = (400 + input$D2plotheight*40))
+  })
+  
   output$plotdoublesim2 <- renderPlotly({
     validate(
       need(!is.null(seuratreactive$plot.data.doublets2), "Please select your estimated percentage of doublets and click SIMULATE DOUBLETS to begin the detection process"))
@@ -22943,20 +22893,20 @@ server <- function(input, output, session) {
     #DR
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR <- NULL
+    seuratreactive$npcDR <- NULL
     seuratreactive$variablefeatures <- NULL
     seuratreactive$ALRAL <- NULL
     
     #DR2
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR2 <- NULL
+    seuratreactive$npcDR2 <- NULL
     seuratreactive$Combined.list <- NULL
     seuratreactive$VFintegrated <- NULL
     seuratreactive$integrationreduction <- NULL
     seuratreactive$kanchor <- NULL
-    seuratreactive$ALRAL2 <- NULL
     
     #C
-    
     seuratreactive$integera <- NULL
     seuratreactive$integerb <- NULL
     seuratreactive$integerc <- NULL
@@ -23082,6 +23032,7 @@ server <- function(input, output, session) {
     seuratreactive$plot.dataMM <- NULL
     
     #DE
+    seuratreactive$onlyposDE <- NULL
     seuratreactive$Subset_GENES <- NULL
     seuratreactive$DE_clusters_samples <- NULL
     seuratreactive$DECluster <- NULL
@@ -23112,7 +23063,7 @@ server <- function(input, output, session) {
     seuratreactive$Subset_GENESSDE <- NULL
     seuratreactive$selectedkey1 <- NULL
     seuratreactive$selectedkey2 <- NULL
-    
+    seuratreactive$onlyposSDE <- NULL
     seuratreactive$GOlabelsSDE <- NULL
     seuratreactive$logSDE <- NULL
     seuratreactive$minSDE <- NULL
@@ -23174,20 +23125,20 @@ server <- function(input, output, session) {
     #DR
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR <- NULL
+    seuratreactive$npcDR <- NULL
     seuratreactive$variablefeatures <- NULL
     seuratreactive$ALRAL <- NULL
     
     #DR2
     seuratreactive$obj <- NULL
     seuratreactive$SCTransformDR2 <- NULL
+    seuratreactive$npcDR2 <- NULL
     seuratreactive$Combined.list <- NULL
     seuratreactive$VFintegrated <- NULL
     seuratreactive$integrationreduction <- NULL
     seuratreactive$kanchor <- NULL
-    seuratreactive$ALRAL2 <- NULL
     
     #C
-    
     seuratreactive$integera <- NULL
     seuratreactive$integerb <- NULL
     seuratreactive$integerc <- NULL
@@ -23313,6 +23264,7 @@ server <- function(input, output, session) {
     seuratreactive$plot.dataMM <- NULL
     
     #DE
+    seuratreactive$onlyposDE <- NULL
     seuratreactive$Subset_GENES <- NULL
     seuratreactive$DE_clusters_samples <- NULL
     seuratreactive$DECluster <- NULL
@@ -23343,7 +23295,7 @@ server <- function(input, output, session) {
     seuratreactive$Subset_GENESSDE <- NULL
     seuratreactive$selectedkey1 <- NULL
     seuratreactive$selectedkey2 <- NULL
-    
+    seuratreactive$onlyposSDE <- NULL
     seuratreactive$GOlabelsSDE <- NULL
     seuratreactive$logSDE <- NULL
     seuratreactive$minSDE <- NULL
@@ -23466,6 +23418,9 @@ server <- function(input, output, session) {
       numericInput("variablefeatures", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Number of Variable Features')), 
                    value = 2000, step = 100,
                    width = "100%"),
+      numericInput("npcDR", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Number of Dimensions')), 
+                   value = 50, step = 1,
+                   width = "100%"),
       materialSwitch("ALRAL", label = h4(HTML('<h4 style = "text-align:justify;color:#000000">Impute dropouts (<a href="https://www.nature.com/articles/s41467-021-27729-z" target="_blank">ALRA method</a>) <br> *NOTE this will increase computational time')),
                      value = FALSE, status = "primary", width = "100%"),
       p(style="text-align: center;", actionBttn("startbuttonDR", "APPLY", size = "lg")),
@@ -23480,6 +23435,7 @@ server <- function(input, output, session) {
   observeEvent(input$startDR, {
     updateVirtualSelect("variablefeatures", selected = seuratreactive$variablefeatures)
     updatePickerInput(session, "SCTransformDR", selected = seuratreactive$SCTransformDR)
+    updateNumericInput(session, "npcDR", value = seuratreactive$npcDR)
     
     if (!is.null(input$SCTransformDR)) {
       if (input$SCTransformDR == "SCTransform") {
@@ -23535,7 +23491,7 @@ server <- function(input, output, session) {
                        seuratreactive$obj <- ScaleData(seuratreactive$obj)
                        
                        if (input$ALRAL == TRUE) {
-                         seuratreactive$ALRA <- "yes"
+                         seuratreactive$ALRAL <- "yes"
                          seuratreactive$obj <- RunALRA(seuratreactive$obj)
                          
                          seuratreactive$obj@assays$RNA@data <- seuratreactive$obj@assays$alra@data
@@ -23545,16 +23501,16 @@ server <- function(input, output, session) {
                          seuratreactive$obj[['alra']] <- NULL
                        }
                        else {
-                         seuratreactive$ALRA <- "no"
+                         seuratreactive$ALRAL <- "no"
                        }
                        
                        incProgress(9/20)
                      }
                      else {
-                       seuratreactive$obj <- SCTransform(seuratreactive$objQC, method = "glmGamPoi", variable.features.n = input$variablefeatures, vst.flavor = "v2")
+                       seuratreactive$obj <- SCTransform(seuratreactive$objQC, variable.features.n = input$variablefeatures, vst.flavor = "v2")
                        
                        if (input$ALRAL == TRUE) {
-                         seuratreactive$ALRA <- "yes"
+                         seuratreactive$ALRAL <- "yes"
                          seuratreactive$obj <- RunALRA(seuratreactive$obj)
                          
                          seuratreactive$obj@assays$SCT@data <- seuratreactive$obj@assays$alra@data
@@ -23564,16 +23520,17 @@ server <- function(input, output, session) {
                          seuratreactive$obj[['alra']] <- NULL
                        }
                        else {
-                         seuratreactive$ALRA <- "no"
+                         seuratreactive$ALRAL <- "no"
                        }
                      }
                      #Dimensionality reduction
-                     seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
+                     seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = input$npcDR)
                      incProgress(18/20)
                      incProgress(20/20)
                      
                      seuratreactive$variablefeatures <- input$variablefeatures
                      seuratreactive$SCTransformDR <- input$SCTransformDR
+                     seuratreactive$npcDR <- input$npcDR
                      
                      if(input$iscollapsebox1 == FALSE) {
                        js$collapse("DRBoxIntro")
@@ -23587,7 +23544,7 @@ server <- function(input, output, session) {
                      shinyjs::hide("NextButtonC")
                      
                      if (!is.null(seuratreactive$obj)) {
-                     shinyjs::show("NextButtonDR")
+                       shinyjs::show("NextButtonDR")
                      }
                      
                      shinyjs::hide("NextButtonCombine")
@@ -23595,7 +23552,7 @@ server <- function(input, output, session) {
                    })
     },
     error = function(e) {
-      shinyalert("ERROR!", "Please check if you have at least 100 cells in your dataset. Please also check the number of variable features that are incorporated.", type = "error", confirmButtonCol = "#337ab7")
+      shinyalert("ERROR!", "Please check the number of variable features that are incorporated. Try reducing the number of dimensions that are computed.", type = "error", confirmButtonCol = "#337ab7")
     })
   }, ignoreInit = T)
   
@@ -23614,7 +23571,7 @@ server <- function(input, output, session) {
   output$plot6 <- renderPlot({
     validate(
       need(!is.null(seuratreactive$variablefeatures), "You must complete the dimensionality reduction step"))
-    ElbowPlot(seuratreactive$obj, ndims = 100)
+    ElbowPlot(seuratreactive$obj, ndims = seuratreactive$npcDR)
   })
   
   output$plot7 <- renderPlot({
@@ -23648,10 +23605,9 @@ server <- function(input, output, session) {
     seuratreactive$integrationreduction <- NULL
     seuratreactive$kanchor <- NULL
     seuratreactive$SCTransformDR2 <- NULL
-    seuratreactive$ALRAL2 <- NULL
+    seuratreactive$npcDR2 <- NULL
     
     #C
-    
     seuratreactive$integera <- NULL
     seuratreactive$integerb <- NULL
     seuratreactive$integerc <- NULL
@@ -23777,6 +23733,7 @@ server <- function(input, output, session) {
     seuratreactive$plot.dataMM <- NULL
     
     #DE
+    seuratreactive$onlyposDE <- NULL
     seuratreactive$Subset_GENES <- NULL
     seuratreactive$DE_clusters_samples <- NULL
     seuratreactive$DECluster <- NULL
@@ -23807,7 +23764,7 @@ server <- function(input, output, session) {
     seuratreactive$Subset_GENESSDE <- NULL
     seuratreactive$selectedkey1 <- NULL
     seuratreactive$selectedkey2 <- NULL
-    
+    seuratreactive$onlyposSDE <- NULL
     seuratreactive$GOlabelsSDE <- NULL
     seuratreactive$logSDE <- NULL
     seuratreactive$minSDE <- NULL
@@ -23979,12 +23936,13 @@ server <- function(input, output, session) {
       pickerInput("integrationreduction", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select Reduction Method')), choices = c("cca", "rpca", "harmony"),
                   selected = "rpca",
                   width = "100%"),
+      numericInput("npcDR2", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Number of Dimensions')), 
+                   value = 50, step = 1,
+                   width = "100%"),
       numericInput("kanchor", h4(HTML('<h4 style = "text-align:justify;color:#000000; margin-top:-50px;">Select k anchors (strength of integration)')), 
                    value = 5,
                    min = 1, max = 50, step = 1,
                    width = "100%"),
-      materialSwitch("ALRAL2", label = h4(HTML('<h4 style = "text-align:justify;color:#000000">Impute dropouts (<a href="https://www.nature.com/articles/s41467-021-27729-z" target="_blank">ALRA method</a>) <br> *NOTE this will increase computational time')),
-                     value = FALSE, status = "primary", width = "100%"),
       p(style="text-align: center;", actionBttn("startbuttonDR2", "INTEGRATE", size = "lg")),
       
       h4(HTML('<h4 style = "text-align:justify"> Please note that this step is computationally intensive and could take upwards of 30 minutes to complete depending on the size of the dataset(s).')),
@@ -23997,6 +23955,7 @@ server <- function(input, output, session) {
   observeEvent(input$startDR2, {
     updatePickerInput(session, "integrationreduction", selected = seuratreactive$integrationreduction)
     updateNumericInput(session, "kanchor", value = seuratreactive$kanchor)
+    updateNumericInput(session, "npcDR2", value = seuratreactive$npcDR2)
     updatePickerInput(session, "SCTransformDR2", selected = seuratreactive$SCTransformDR2)
     
     if (!is.null(input$SCTransformDR2)) {
@@ -24067,7 +24026,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$startbuttonDR2, {
-    #tryCatch({
+    tryCatch({
       withProgress(message = 'Performing Dimensionality Reduction. Please wait...',
                    value = 0, {
                      incProgress(1/20)
@@ -24088,50 +24047,36 @@ server <- function(input, output, session) {
                      
                      incProgress(5/20)
                      
+                     # normalize and identify variable features for each dataset independently
+                     seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
+                       x <- NormalizeData(x)
+                       x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = input$VFintegrated)
+                     })
+                     incProgress(7/20)
+                     
                      if (input$SCTransformDR2 == "LogNormalize") {
-                       # normalize and identify variable features for each dataset independently
-                       seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
-                         x <- NormalizeData(x)
-                         x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = input$VFintegrated)
-                       })
-                       incProgress(7/20)
-                       
                        
                        if (input$integrationreduction == "rpca" | input$integrationreduction == "cca") {
                          
                          # select features that are repeatedly variable across datasets for integration
                          features <- SelectIntegrationFeatures(object.list = seuratreactive$Combined.list)
-                         
-                         if (input$ALRAL2 == TRUE) {
-                           seuratreactive$ALRAL2 <- "yes"
-                           
-                           seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
-                             x <- ScaleData(x, features = features)
-                             x <- RunALRA(x)
-                             x@assays$RNA@data <- x@assays$alra@data
-                             DefaultAssay(x) <- "RNA"
-                             x[['alra']] <- NULL
-                             x <- RunPCA(x, features = features, npcs = 100)
-                           })
-                         }
-                         else {
-                           seuratreactive$ALRAL2 <- "no"
-                           seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
-                             x <- ScaleData(x, features = features)
-                             x <- RunPCA(x, features = features, npcs = 100)
-                           })
-                         }
 
+                         seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
+                           x <- ScaleData(x, features = features)
+                           x <- RunPCA(x, features = features, npcs = input$npcDR2)
+                         })
+                         
                          incProgress(10/20)
                          
                          #Perform integration
                          Combined.anchors <- FindIntegrationAnchors(object.list = seuratreactive$Combined.list, anchor.features = features,
+                                                                    dims = 1:input$npcDR2,
                                                                     reduction = input$integrationreduction, 
                                                                     k.anchor = input$kanchor)
                          incProgress(12/20)
                          
                          # integrate data and keep full geneset
-                         combined.dataset <- IntegrateData(anchorset = Combined.anchors)
+                         combined.dataset <- IntegrateData(anchorset = Combined.anchors, dims = 1:input$npcDR2)
                          incProgress(14/20)
                          
                          seuratreactive$obj <- combined.dataset
@@ -24141,7 +24086,7 @@ server <- function(input, output, session) {
                          incProgress(16/20)
                          
                          #Dimensionality reduction
-                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
+                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = input$npcDR2)
                          
                          seuratreactive$kanchor <- input$kanchor
                        }
@@ -24152,38 +24097,9 @@ server <- function(input, output, session) {
                          
                          Combined <- FindVariableFeatures(Combined, selection.method = "vst", nfeatures = input$VFintegrated)
                          
-                         incProgress(8/20)
-                         
                          Combined <- ScaleData(Combined)
                          
-                         Combined.list <- SplitObject(Combined, split.by = "orig.ident")
-                         
-                         if (input$ALRAL2 == TRUE) {
-                           seuratreactive$ALRAL2 <- "yes"
-                           
-                           Combined.list <- lapply(Combined.list, FUN = function(x) {
-                             x <- RunALRA(x)
-                             x@assays$RNA@data <- x@assays$alra@data
-                             DefaultAssay(x) <- "RNA"
-                             x[['alra']] <- NULL
-                             x <- RunPCA(x, npcs = 100)
-                           })
-                         }
-                         else {
-                           seuratreactive$ALRAL2 <- "no"
-                         }
-                         
-                         Combined <- Merge_Seurat_List(Combined.list)
-                         
-                         incProgress(10/20)
-                         
-                         Combined <- NormalizeData(Combined)
-                         
-                         Combined <- FindVariableFeatures(Combined, selection.method = "vst", nfeatures = input$VFintegrated)
-                         
-                         Combined <- ScaleData(Combined)
-                         
-                         Combined <- RunPCA(Combined, npcs = 100)
+                         Combined <- RunPCA(Combined, npcs = input$npcDR2)
                          
                          incProgress(12/20)
                          
@@ -24198,29 +24114,14 @@ server <- function(input, output, session) {
                      }
                      else if (input$SCTransformDR2 == "SCTransform") {
                        
-                       if (input$ALRAL2 == TRUE) {
-                         seuratreactive$ALRAL2 <- "yes"
-                         
-                         seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
-                           x <- SCTransform(x, method = "glmGamPoi", variable.features.n = input$VFintegrated, vst.flavor = "v2")
-                           x <- RunALRA(x)
-                           x@assays$SCT@data <- x@assays$alra@data
-                           DefaultAssay(x) <- "SCT"
-                           x[['alra']] <- NULL
-                           x <- RunPCA(x, npcs = 100)
-                         })
-                       }
-                       else {
-                         seuratreactive$ALRAL2 <- "no"
-                         seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
-                           x <- SCTransform(x, method = "glmGamPoi", variable.features.n = input$VFintegrated, vst.flavor = "v2")
-                           x <- RunPCA(x, npcs = 100)
-                         })
-                       }
-
-                       incProgress(7/20)
-                       
                        if (input$integrationreduction == "rpca" | input$integrationreduction == "cca") {
+
+                         seuratreactive$Combined.list <- lapply(seuratreactive$Combined.list, FUN = function(x) {
+                           x <- SCTransform(x, variable.features.n = input$VFintegrated, vst.flavor = "v2")
+                           x <- RunPCA(x, npcs = input$npcDR2)
+                         })
+                         
+                         incProgress(7/20)
                          
                          # select features that are repeatedly variable across datasets for integration
                          features <- SelectIntegrationFeatures(object.list = seuratreactive$Combined.list, nfeatures = input$VFintegrated)
@@ -24232,13 +24133,14 @@ server <- function(input, output, session) {
                          #Perform integration
                          Combined.anchors <- FindIntegrationAnchors(object.list = seuratreactive$Combined.list, anchor.features = features,
                                                                     normalization.method = "SCT",
+                                                                    dims = 1:input$npcDR2,
                                                                     reduction = input$integrationreduction, 
                                                                     k.anchor = input$kanchor)
                          
                          incProgress(12/20)
                          
                          # integrate data and keep full geneset
-                         combined.dataset <- IntegrateData(anchorset = Combined.anchors, normalization.method = "SCT")
+                         combined.dataset <- IntegrateData(anchorset = Combined.anchors, normalization.method = "SCT", dims = 1:input$npcDR2)
                          
                          incProgress(14/20)
                          
@@ -24247,39 +24149,16 @@ server <- function(input, output, session) {
                          incProgress(16/20)
                          
                          #Dimensionality reduction
-                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
+                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = input$npcDR2)
                          
                          seuratreactive$kanchor <- input$kanchor
                        }
                        
                        else if (input$integrationreduction == "harmony") {
                          
-                         Combined <- SCTransform(Combined, method = "glmGamPoi", variable.features.n = input$VFintegrated, vst.flavor = "v2")
+                         Combined <- SCTransform(Combined, variable.features.n = input$VFintegrated, vst.flavor = "v2")
                          
-                         Combined.list <- SplitObject(Combined, split.by = "orig.ident")
-                         
-                         if (input$ALRAL2 == TRUE) {
-                           seuratreactive$ALRAL2 <- "yes"
-                           
-                           Combined.list <- lapply(Combined.list, FUN = function(x) {
-                             x <- RunALRA(x)
-                             x@assays$SCT@data <- x@assays$alra@data
-                             DefaultAssay(x) <- "SCT"
-                             x[['alra']] <- NULL
-                             x <- RunPCA(x, npcs = 100)
-                           })
-                         }
-                         else {
-                           seuratreactive$ALRAL2 <- "no"
-                         }
-                         
-                         Combined <- Merge_Seurat_List(Combined.list)
-                         
-                         incProgress(10/20)
-                         
-                         Combined <- SCTransform(Combined, method = "glmGamPoi", variable.features.n = input$VFintegrated, vst.flavor = "v2")
-                         
-                         Combined <- RunPCA(Combined, npcs = 100)
+                         Combined <- RunPCA(Combined, npcs = input$npcDR2)
                          
                          incProgress(12/20)
                          
@@ -24301,6 +24180,8 @@ server <- function(input, output, session) {
                      
                      seuratreactive$SCTransformDR2 <- input$SCTransformDR2
                      
+                     seuratreactive$npcDR2 <- input$npcDR2
+                     
                      incProgress(20/20)
                      
                      js$collapse("DRBoxIntro2")
@@ -24320,10 +24201,10 @@ server <- function(input, output, session) {
                      shinyjs::hide("NextButtonCombine")
                      shinyjs::hide("NextButtonD2")
                    })
-    # },
-    # error = function(e) {
-    #   shinyalert("ERROR!", "You may not have enough similarity between the two datasets to perform the integration. Please also check the number of variable features that are incorporated.", type = "error", confirmButtonCol = "#337ab7")
-    # })
+    },
+    error = function(e) {
+      shinyalert("ERROR!", "You may not have enough similarity between the two datasets to perform the integration. Try reduce the number of dimensions computed. Please also check the number of variable features that are incorporated.", type = "error", confirmButtonCol = "#337ab7")
+    })
   }, ignoreInit = T)
   
   output$DR2VF1 <- renderPlot({
@@ -24348,10 +24229,10 @@ server <- function(input, output, session) {
     validate(
       need(!is.null(seuratreactive$VFintegrated), "You must complete the dimensionality reduction step"))
     if (seuratreactive$integrationreduction == "rpca" | seuratreactive$integrationreduction == "cca") {
-      ElbowPlot(seuratreactive$obj, ndims = 100)
+      ElbowPlot(seuratreactive$obj, ndims = seuratreactive$npcDR2)
     }
     else if (seuratreactive$integrationreduction == "harmony") {
-      ElbowPlot(seuratreactive$obj, reduction = "harmony", ndims = 100)
+      ElbowPlot(seuratreactive$obj, reduction = "harmony", ndims = seuratreactive$npcDR2)
     }
   })
   
@@ -24502,6 +24383,7 @@ server <- function(input, output, session) {
       seuratreactive$plot.dataMM <- NULL
       
       #DE
+      seuratreactive$onlyposDE <- NULL
       seuratreactive$Subset_GENES <- NULL
       seuratreactive$DE_clusters_samples <- NULL
       seuratreactive$DECluster <- NULL
@@ -24532,7 +24414,7 @@ server <- function(input, output, session) {
       seuratreactive$Subset_GENESSDE <- NULL
       seuratreactive$selectedkey1 <- NULL
       seuratreactive$selectedkey2 <- NULL
-      
+      seuratreactive$onlyposSDE <- NULL
       seuratreactive$GOlabelsSDE <- NULL
       seuratreactive$logSDE <- NULL
       seuratreactive$minSDE <- NULL
@@ -24796,6 +24678,7 @@ server <- function(input, output, session) {
       seuratreactive$plot.dataMM <- NULL
       
       #DE
+      seuratreactive$onlyposDE <- NULL
       seuratreactive$Subset_GENES <- NULL
       seuratreactive$DE_clusters_samples <- NULL
       seuratreactive$DECluster <- NULL
@@ -24826,7 +24709,7 @@ server <- function(input, output, session) {
       seuratreactive$Subset_GENESSDE <- NULL
       seuratreactive$selectedkey1 <- NULL
       seuratreactive$selectedkey2 <- NULL
-      
+      seuratreactive$onlyposSDE <- NULL
       seuratreactive$GOlabelsSDE <- NULL
       seuratreactive$logSDE <- NULL
       seuratreactive$minSDE <- NULL
@@ -25050,8 +24933,12 @@ server <- function(input, output, session) {
                    })
     },
     error = function(e) {
-      shinyalert("ERROR!", "Please check clustering parameters.", type = "error", confirmButtonCol = "#337ab7")
+      shinyalert("ERROR!", "Please check clustering parameters. Please make sure the number of dimensions does not exceed the number of dimensions computed during the dimensionality reduction step (refer to dimensionality reduction tab).", type = "error", confirmButtonCol = "#337ab7")
     })
+  })
+  
+  output$plot8UI <- renderUI({
+    plotlyOutput("plot8", height = (400 + input$Cplotheight*40))
   })
   
   output$plot8 <- renderPlotly({
@@ -25143,7 +25030,9 @@ server <- function(input, output, session) {
           geom_bar(position="stack", stat="identity") + 
           ylab("") + 
           theme_bw() +
-          theme(text = element_text(size=input$labelsizeC))
+          theme(text = element_text(size=input$labelsizeC),
+                axis.text.x= element_text(size = input$labelsizeC),
+                axis.text.y= element_text(size = input$labelsizeC))
       }
       else {
         ggplot(seuratreactive$Graph, aes(x=Sample, y=Percentage, fill = `Seurat Clusters`)) +
@@ -25151,7 +25040,9 @@ server <- function(input, output, session) {
           scale_y_continuous(labels = scales::percent) +
           ylab("") +
           theme_bw() +
-          theme(text = element_text(size=input$labelsizeC))
+          theme(text = element_text(size=input$labelsizeC),
+                axis.text.x= element_text(size = input$labelsizeC),
+                axis.text.y= element_text(size = input$labelsizeC))
       }
     }
     else if (input$Sample_selectionC == "Labelled Cells") {
@@ -25166,7 +25057,9 @@ server <- function(input, output, session) {
           geom_bar(position="stack", stat="identity") + 
           ylab("") + 
           theme_bw() +
-          theme(text = element_text(size=input$labelsizeC))
+          theme(text = element_text(size=input$labelsizeC),
+                axis.text.x= element_text(size = input$labelsizeC),
+                axis.text.y= element_text(size = input$labelsizeC))
       }
       else {
         ggplot(seuratreactive$Graph, aes(x=Sample, y=Percentage, fill = `Labelled Cells`)) +
@@ -25174,7 +25067,9 @@ server <- function(input, output, session) {
           scale_y_continuous(labels = scales::percent) +
           ylab("") +
           theme_bw() +
-          theme(text = element_text(size=input$labelsizeC))
+          theme(text = element_text(size=input$labelsizeC),
+                axis.text.x= element_text(size = input$labelsizeC),
+                axis.text.y= element_text(size = input$labelsizeC))
       }
     }
   })
@@ -25312,6 +25207,7 @@ server <- function(input, output, session) {
       seuratreactive$plot.dataMM <- NULL
       
       #DE
+      seuratreactive$onlyposDE <- NULL
       seuratreactive$Subset_GENES <- NULL
       seuratreactive$DE_clusters_samples <- NULL
       seuratreactive$DECluster <- NULL
@@ -25342,7 +25238,7 @@ server <- function(input, output, session) {
       seuratreactive$Subset_GENESSDE <- NULL
       seuratreactive$selectedkey1 <- NULL
       seuratreactive$selectedkey2 <- NULL
-      
+      seuratreactive$onlyposSDE <- NULL
       seuratreactive$GOlabelsSDE <- NULL
       seuratreactive$logSDE <- NULL
       seuratreactive$minSDE <- NULL
@@ -25603,8 +25499,9 @@ server <- function(input, output, session) {
       updatePickerInput(session, 'CC1a', selected = "")
     },
     error = function(e) {
-      shinyalert("ERROR!", "Looks like you don't have enough variation in your dataset, please try the LogNormalize setting for data Normalization.", type = "error", confirmButtonCol = "#337ab7")
-    }) 
+      shinyalert("WARNING!", "Low cell numbers are detected or cell cycle genes not present in dataset, click start again to continue anyway.", type = "warning", confirmButtonCol = "#337ab7")
+      seuratreactive$obj <- NormalizeData(seuratreactive$obj)
+    })
   })
   
   observeEvent(input$rewindCC |input$rewindCC2 | input$rewindCC3, {
@@ -25620,11 +25517,25 @@ server <- function(input, output, session) {
                          seuratreactive$obj <- ScaleData(seuratreactive$obj)
                        }
                        else {
-                         seuratreactive$obj <- SCTransform(seuratreactive$obj, method = "glmGamPoi", variable.features.n = seuratreactive$variablefeatures, vst.flavor = "v2")
+                         seuratreactive$obj <- SCTransform(seuratreactive$obj, variable.features.n = seuratreactive$variablefeatures, vst.flavor = "v2")
+                         
+                         if (input$ALRAL == TRUE) {
+                           seuratreactive$ALRAL <- "yes"
+                           seuratreactive$obj <- RunALRA(seuratreactive$obj)
+                           
+                           seuratreactive$obj@assays$SCT@data <- seuratreactive$obj@assays$alra@data
+                           
+                           DefaultAssay(seuratreactive$obj) <- "SCT"
+                           
+                           seuratreactive$obj[['alra']] <- NULL
+                         }
+                         else {
+                           seuratreactive$ALRAL <- "no"
+                         }
                        }
                        
                        #Dimensionality reduction
-                       seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
+                       seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = seuratreactive$npcDR)
                        
                        #K-nearest neighbours
                        seuratreactive$obj <- FindNeighbors(seuratreactive$obj, dims = 1:input$integera, k.param = input$integerb, n.trees = input$integerc)
@@ -25666,7 +25577,7 @@ server <- function(input, output, session) {
                          seuratreactive$obj <- ScaleData(seuratreactive$obj)
                          
                          #Dimensionality reduction
-                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
+                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = seuratreactive$npcDR2)
                          
                          #K-nearest neighbours
                          seuratreactive$obj <- FindNeighbors(seuratreactive$obj, dims = 1:input$integera, k.param = input$integerb, n.trees = input$integerc)
@@ -25704,7 +25615,7 @@ server <- function(input, output, session) {
                          
                          seuratreactive$obj <- ScaleData(seuratreactive$obj)
                          
-                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
+                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = seuratreactive$npcDR2)
                          
                          seuratreactive$obj <- RunHarmony(seuratreactive$obj, "orig.ident", max.iter.harmony = 20)
                          
@@ -25745,10 +25656,10 @@ server <- function(input, output, session) {
                        
                        if (input$integrationreduction == "rpca" | input$integrationreduction == "cca") {
                          
-                         seuratreactive$obj <- SCTransform(seuratreactive$obj, method = "glmGamPoi", variable.features.n = seuratreactive$VFintegrated, vst.flavor = "v2")
+                         seuratreactive$obj <- SCTransform(seuratreactive$obj, variable.features.n = seuratreactive$VFintegrated, vst.flavor = "v2")
                          
                          #Dimensionality reduction
-                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
+                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = seuratreactive$npcDR2)
                          
                          #K-nearest neighbours
                          seuratreactive$obj <- FindNeighbors(seuratreactive$obj, dims = 1:input$integera, k.param = input$integerb, n.trees = input$integerc)
@@ -25784,9 +25695,9 @@ server <- function(input, output, session) {
                        
                        else if (input$integrationreduction == "harmony") {
                          
-                         seuratreactive$obj <- SCTransform(seuratreactive$obj, method = "glmGamPoi", variable.features.n = seuratreactive$VFintegrated, vst.flavor = "v2")
+                         seuratreactive$obj <- SCTransform(seuratreactive$obj, variable.features.n = seuratreactive$VFintegrated, vst.flavor = "v2")
                          
-                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
+                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = seuratreactive$npcDR2)
                          
                          seuratreactive$obj <- RunHarmony(seuratreactive$obj, "orig.ident", max.iter.harmony = 20, assay.use = "SCT")
                          
@@ -25895,15 +25806,15 @@ server <- function(input, output, session) {
         }
       }
       else if (!is.null(seuratreactive$variablefeatures)) {
-      if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "LogNormalize" | 
-               !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "LogNormalize") {
-        updateVirtualSelect('CC2', choices = c(seuratreactive$obj[["RNA"]]@var.features), 
-                            selected = seuratreactive$reductionCC2)
-      }
-      else {
-        updateVirtualSelect('CC2', choices = c(seuratreactive$obj[["SCT"]]@var.features), 
-                            selected = seuratreactive$reductionCC2)
-      }
+        if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "LogNormalize" | 
+            !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "LogNormalize") {
+          updateVirtualSelect('CC2', choices = c(seuratreactive$obj[["RNA"]]@var.features), 
+                              selected = seuratreactive$reductionCC2)
+        }
+        else {
+          updateVirtualSelect('CC2', choices = c(seuratreactive$obj[["SCT"]]@var.features), 
+                              selected = seuratreactive$reductionCC2)
+        }
       }
     }
   })
@@ -26001,11 +25912,24 @@ server <- function(input, output, session) {
                          seuratreactive$obj <- ScaleData(seuratreactive$obj, vars.to.regress = vars)
                        }
                        else {
-                         seuratreactive$obj <- SCTransform(seuratreactive$obj, method = "glmGamPoi", variable.features.n = seuratreactive$variablefeatures, vst.flavor = "v2", vars.to.regress = vars)
+                         seuratreactive$obj <- SCTransform(seuratreactive$obj, variable.features.n = seuratreactive$variablefeatures, vst.flavor = "v2", vars.to.regress = vars)
+                         if (input$ALRAL == TRUE) {
+                           seuratreactive$ALRAL <- "yes"
+                           seuratreactive$obj <- RunALRA(seuratreactive$obj)
+                           
+                           seuratreactive$obj@assays$SCT@data <- seuratreactive$obj@assays$alra@data
+                           
+                           DefaultAssay(seuratreactive$obj) <- "SCT"
+                           
+                           seuratreactive$obj[['alra']] <- NULL
+                         }
+                         else {
+                           seuratreactive$ALRAL <- "no"
+                         }
                        }
                        
                        #Dimensionality reduction
-                       seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
+                       seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = seuratreactive$npcDR)
                        
                        #K-nearest neighbours
                        seuratreactive$obj <- FindNeighbors(seuratreactive$obj, dims = 1:input$integera, k.param = input$integerb, n.trees = input$integerc)
@@ -26046,7 +25970,7 @@ server <- function(input, output, session) {
                          seuratreactive$obj <- ScaleData(seuratreactive$obj, vars.to.regress = vars)
                          
                          #Dimensionality reduction
-                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
+                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = seuratreactive$npcDR2)
                          
                          #K-nearest neighbours
                          seuratreactive$obj <- FindNeighbors(seuratreactive$obj, dims = 1:input$integera, k.param = input$integerb, n.trees = input$integerc)
@@ -26084,7 +26008,7 @@ server <- function(input, output, session) {
                          
                          seuratreactive$obj <- ScaleData(seuratreactive$obj, vars.to.regress = vars)
                          
-                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
+                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = seuratreactive$npcDR2)
                          
                          seuratreactive$obj <- RunHarmony(seuratreactive$obj, "orig.ident", max.iter.harmony = 20)
                          
@@ -26125,10 +26049,10 @@ server <- function(input, output, session) {
                        
                        if (input$integrationreduction == "rpca" | input$integrationreduction == "cca") {
                          
-                         seuratreactive$obj <- SCTransform(seuratreactive$obj, method = "glmGamPoi", variable.features.n = seuratreactive$VFintegrated, vst.flavor = "v2", vars.to.regress = vars)
+                         seuratreactive$obj <- SCTransform(seuratreactive$obj, variable.features.n = seuratreactive$VFintegrated, vst.flavor = "v2", vars.to.regress = vars)
                          
                          #Dimensionality reduction
-                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
+                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = seuratreactive$npcDR2)
                          
                          #K-nearest neighbours
                          seuratreactive$obj <- FindNeighbors(seuratreactive$obj, dims = 1:input$integera, k.param = input$integerb, n.trees = input$integerc)
@@ -26164,9 +26088,9 @@ server <- function(input, output, session) {
                        
                        else if (input$integrationreduction == "harmony") {
                          
-                         seuratreactive$obj <- SCTransform(seuratreactive$obj, method = "glmGamPoi", variable.features.n = seuratreactive$VFintegrated, vst.flavor = "v2", vars.to.regress = vars)
+                         seuratreactive$obj <- SCTransform(seuratreactive$obj, variable.features.n = seuratreactive$VFintegrated, vst.flavor = "v2", vars.to.regress = vars)
                          
-                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = 100)
+                         seuratreactive$obj <- RunPCA(seuratreactive$obj, npcs = seuratreactive$npcDR2)
                          
                          seuratreactive$obj <- RunHarmony(seuratreactive$obj, "orig.ident", max.iter.harmony = 20, assay.use = "SCT")
                          
@@ -26247,6 +26171,9 @@ server <- function(input, output, session) {
     })
   }, ignoreInit = T)
   
+  output$plotCCUI <- renderUI({
+    plotlyOutput("plotCC", height = (400 + input$CCplotheight*40))
+  })
   
   output$plotCC <- renderPlotly({
     validate(
@@ -26532,6 +26459,7 @@ server <- function(input, output, session) {
       seuratreactive$plot.dataMM <- NULL
       
       #DE
+      seuratreactive$onlyposDE <- NULL
       seuratreactive$Subset_GENES <- NULL
       seuratreactive$DE_clusters_samples <- NULL
       seuratreactive$DECluster <- NULL
@@ -26562,7 +26490,7 @@ server <- function(input, output, session) {
       seuratreactive$Subset_GENESSDE <- NULL
       seuratreactive$selectedkey1 <- NULL
       seuratreactive$selectedkey2 <- NULL
-      
+      seuratreactive$onlyposSDE <- NULL
       seuratreactive$GOlabelsSDE <- NULL
       seuratreactive$logSDE <- NULL
       seuratreactive$minSDE <- NULL
@@ -26749,7 +26677,7 @@ server <- function(input, output, session) {
     }
   }, ignoreInit = T)
   
-  observeEvent(input$NextButtonCC | input$regress1 | input$regress2 | input$regress3, {
+  observeEvent(input$NextButtonCC, {
     if (is.null(seuratreactive$new.cell.ids) && is.null(seuratreactive$summary.output) && is.null(seuratreactive$MAGMA_Final_Results) && is.null(seuratreactive$regulons) && is.null(seuratreactive$objGEyes) && is.null(seuratreactive$TA_pickercluster) && is.null(seuratreactive$Chatdb) && is.null(seuratreactive$MM) && is.null(seuratreactive$markersDE) && is.null(Yu$result) && is.null(seuratreactive$markersDRUG) && is.null(seuratreactive$markersSDE) && is.null(YuSPA$result) && is.null(seuratreactive$markersDRUG2)) {
       shinyalert("CONGRATS!", "You have completed data preprocessing! Analysis from this point on is in your hands, please explore the NEW tabs that have appeared in the left sidebar. Goodluck!", type = "success", confirmButtonCol = "#337ab7")
     }
@@ -27217,7 +27145,7 @@ server <- function(input, output, session) {
         
         updatePickerInput(session, 'plotclustersDE', choices = list("Seurat Clusters", "Sample", "Cell Cycle Phase", "Number of unique genes (nFeature_RNA)", "Number of UMIs per cell (nCount_RNA)",
                                                                     "Ribosomal Percentage (percent.ribo)", "Mitochondrial Percentage (percent.mt)", "Differential Expression"),
-                          selected = "Differential Expression")
+                          selected = "Sample")
         
         updatePickerInput(session, 'plotclustersSDE', choices = list("Seurat Clusters", "Sample", "Cell Cycle Phase", "Number of unique genes (nFeature_RNA)", "Number of UMIs per cell (nCount_RNA)",
                                                                      "Ribosomal Percentage (percent.ribo)", "Mitochondrial Percentage (percent.mt)"),
@@ -27308,7 +27236,7 @@ server <- function(input, output, session) {
         
         updatePickerInput(session, 'plotclustersDE', choices = list("Labelled Cells", "Seurat Clusters", "Sample", "Cell Cycle Phase", "Number of unique genes (nFeature_RNA)", "Number of UMIs per cell (nCount_RNA)",
                                                                     "Ribosomal Percentage (percent.ribo)", "Mitochondrial Percentage (percent.mt)", "Differential Expression"),
-                          selected = "Differential Expression")
+                          selected = "Sample")
         
         updatePickerInput(session, 'plotclustersSDE', choices = list("Labelled Cells", "Seurat Clusters", "Sample", "Cell Cycle Phase", "Number of unique genes (nFeature_RNA)", "Number of UMIs per cell (nCount_RNA)",
                                                                      "Ribosomal Percentage (percent.ribo)", "Mitochondrial Percentage (percent.mt)"),
@@ -27826,8 +27754,9 @@ server <- function(input, output, session) {
     })
   })
   
-  
-  
+  output$plot9UI <- renderUI({
+    plotlyOutput("plot9", height = (400 + input$Lplotheight*40))
+  })
   
   output$plot9 <- renderPlotly({
     validate(
@@ -28015,10 +27944,10 @@ server <- function(input, output, session) {
   observe({
     if (!is.null(seuratreactive$reductionCC1)) {
       if (input$LC_clusters == "Seurat Clusters"){
-        updateVirtualSelect('refInput', choices = c(unique(levels(seuratreactive$obj$seurat_clusters))))
+        updateVirtualSelect('refInput', choices = c(unique(levels(seuratreactive$obj$seurat_clusters))), selected = unique(levels(seuratreactive$obj$seurat_clusters))[1])
       }
       else {
-        updateVirtualSelect('refInput', choices = c(unique(levels(seuratreactive$obj))))
+        updateVirtualSelect('refInput', choices = c(unique(levels(seuratreactive$obj))), selected = unique(levels(seuratreactive$obj))[1])
       }
     }
   })
@@ -28045,7 +27974,15 @@ server <- function(input, output, session) {
                        
                        Idents(seuratreactive$obj) <- seuratreactive$obj@meta.data$seurat_clusters
                        
-                       markers <- FindAllMarkers(seuratreactive$obj, group.by = "seurat_clusters",
+                       if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "SCTransform" | 
+                           !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "SCTransform") {
+                         DEtestobj <- PrepSCTFindMarkers(seuratreactive$obj)
+                       }
+                       else {
+                         DEtestobj <- seuratreactive$obj
+                       }
+                       
+                       markers <- FindAllMarkers(DEtestobj, group.by = "seurat_clusters",
                                                  min.pct = input$minL, logfc.threshold = input$log2FCL,
                                                  test.use = input$testuseL)
                        
@@ -28074,7 +28011,15 @@ server <- function(input, output, session) {
                        
                        seuratreactive$obj <- RenameIdents(seuratreactive$obj, seuratreactive$new.cell.ids)
                        
-                       markers <- FindAllMarkers(seuratreactive$obj,
+                       if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "SCTransform" | 
+                           !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "SCTransform") {
+                         DEtestobj <- PrepSCTFindMarkers(seuratreactive$obj)
+                       }
+                       else {
+                         DEtestobj <- seuratreactive$obj
+                       }
+                       
+                       markers <- FindAllMarkers(DEtestobj,
                                                  min.pct = input$minL, logfc.threshold = input$log2FCL,
                                                  test.use = input$testuseL)
                        
@@ -28496,6 +28441,10 @@ server <- function(input, output, session) {
     HTML(vector_msig)
   })
   
+  output$plotGEUI <- renderUI({
+    plotlyOutput("plotGE", height = (400 + input$GEplotheight*40))
+  })
+  
   output$plotGE <- renderPlotly({
     validate(
       need(!is.null(seuratreactive$plot.data$`Gene Expression`), 'You must select a gene first to view its expression'))
@@ -28885,23 +28834,46 @@ server <- function(input, output, session) {
     
     if (input$mergedGE == FALSE) {
       if (!is.null(seuratreactive$GEInput)) {
-        p <- VlnPlot(seuratreactive$objVLN, features = seuratreactive$GEInput, pt.size = input$Vlnpt, ncol = 1) + theme(text = element_text(size=input$VlnsizeGE))
-        seuratreactive$p <- p
-        p
+        p <- VlnPlot(seuratreactive$objVLN, features = seuratreactive$GEInput, pt.size = input$Vlnpt, ncol = 1, combine = F) 
+        
+        p1 <- list() 
+        for (i in seq_along(p)){
+          p1[[i]] = p[[i]] + theme(text = element_text(size=input$VlnsizeGE),
+                                   axis.text.x = element_text(size = input$VlnsizeGE), 
+                                   axis.text.y = element_text(size = input$VlnsizeGE)) 
+        }
+        
+        print(plot_grid(plotlist = p1, ncol = 1))
+
+        seuratreactive$p <- plot_grid(plotlist = p1, ncol = 1)
       }
       
       else if (!is.null(seuratreactive$GSEInput)) {
-        p <- VlnPlot(seuratreactive$objVLN, features = intersect(unique(seuratreactive$Gene_vector_msig), rownames(seuratreactive$objVLN)), pt.size = input$Vlnpt, ncol = 1) + theme(text = element_text(size=input$VlnsizeGE))
-        seuratreactive$p <- p
-        p 
+        p <- VlnPlot(seuratreactive$objVLN, features = intersect(unique(seuratreactive$Gene_vector_msig), rownames(seuratreactive$objVLN)), pt.size = input$Vlnpt, ncol = 1, combine = F) 
+        
+        p1 <- list() 
+        for (i in seq_along(p)){
+          p1[[i]] = p[[i]] + theme(text = element_text(size=input$VlnsizeGE),
+                                   axis.text.x = element_text(size = input$VlnsizeGE), 
+                                   axis.text.y = element_text(size = input$VlnsizeGE)) 
+        }
+        
+        print(plot_grid(plotlist = p1, ncol = 1))
+        
+        seuratreactive$p <- plot_grid(plotlist = p1, ncol = 1)
       }
     }
     else {
       if (!is.null(seuratreactive$GEInput) | !is.null(seuratreactive$GSEInput)) {
-        p <- VlnPlot(seuratreactive$objVLN, features = "Gene_Expression", pt.size = input$Vlnpt) + theme(text = element_text(size=input$VlnsizeGE))
-        p[[1]][["labels"]][["title"]] <- seuratreactive$titleGE
+        p <- VlnPlot(seuratreactive$objVLN, features = "Gene_Expression", pt.size = input$Vlnpt) + 
+          theme(text = element_text(size=input$VlnsizeGE),
+                                   axis.text.x = element_text(size = input$VlnsizeGE), 
+                                   axis.text.y = element_text(size = input$VlnsizeGE)) 
+         p[[1]][["labels"]][["title"]] <- seuratreactive$titleGE
+        
         seuratreactive$p <- p
-        p
+        
+        print(p)
       }
     }
   }) 
@@ -29010,7 +28982,9 @@ server <- function(input, output, session) {
         RotatedAxis() +
         scale_colour_gradient(low = "blue", high = "red") +
         guides(color = guide_colorbar(title = 'Average Expression')) +
-        theme(axis.text.x = element_text(angle=90, hjust=1, vjust = 0.5), text = element_text(size=input$GEDotSize))
+        theme(text = element_text(size=input$GEDotSize),
+              axis.text.x= element_text(size = input$GEDotSize),
+              axis.text.y= element_text(size = input$GEDotSize))
       seuratreactive$q <- p
       p
     }
@@ -29020,7 +28994,9 @@ server <- function(input, output, session) {
         RotatedAxis() +
         scale_colour_gradient(low = "blue", high = "red") +
         guides(color = guide_colorbar(title = 'Average Expression')) +
-        theme(axis.text.x = element_text(angle=90, hjust=1, vjust = 0.5), text = element_text(size=input$GEDotSize))
+        theme(text = element_text(size=input$GEDotSize),
+              axis.text.x= element_text(size = input$GEDotSize),
+              axis.text.y= element_text(size = input$GEDotSize))
       p[["labels"]][["title"]] <- seuratreactive$titleGE
       seuratreactive$q <- p
       p 
@@ -29162,11 +29138,11 @@ server <- function(input, output, session) {
                      removeModal()
                      
                      if (input$MEGENA_selectmethod == "Variable Genes") {
-                     #Find variable features
-                     
-                     seuratreactive$VF <- FindVariableFeatures(seuratreactive$obj, nfeatures = input$variablegenesMEGENA)
-                     
-                     seuratreactive$VF <- VariableFeatures(seuratreactive$VF)
+                       #Find variable features
+                       
+                       seuratreactive$VF <- FindVariableFeatures(seuratreactive$obj, nfeatures = input$variablegenesMEGENA)
+                       
+                       seuratreactive$VF <- VariableFeatures(seuratreactive$VF)
                      }
                      else if (input$MEGENA_selectmethod == "Differentially Expressed Genes") {
                        seuratreactive$VF <- seuratreactive$markersDE$`Gene Name`
@@ -29225,7 +29201,7 @@ server <- function(input, output, session) {
                      }
                      else {
                        
-                       n.cores <- 8; # number of cores/threads to call for PCP
+                       n.cores <- 10; # number of cores/threads to call for PCP
                        doPar <-TRUE; # do we want to parallelize?
                        
                        run.par = doPar & (getDoParWorkers() == 1) 
@@ -29269,7 +29245,15 @@ server <- function(input, output, session) {
                          
                          Idents(seuratreactive$obj) <- seuratreactive$obj@meta.data$seurat_clusters
                          
-                         seuratreactive$markersMEGENA <- FindAllMarkers(seuratreactive$obj, logfc.threshold = input$log2FCMEGENA, min.pct = input$minMEGENA,
+                         if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "SCTransform" | 
+                             !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "SCTransform") {
+                           DEtestobj <- PrepSCTFindMarkers(seuratreactive$obj)
+                         }
+                         else {
+                           DEtestobj <- seuratreactive$obj
+                         }
+                         
+                         seuratreactive$markersMEGENA <- FindAllMarkers(DEtestobj, logfc.threshold = input$log2FCMEGENA, min.pct = input$minMEGENA,
                                                                         test.use = input$testuseMEGENA,
                                                                         group.by = "seurat_clusters", only.pos = T)
                          
@@ -29299,7 +29283,15 @@ server <- function(input, output, session) {
                            seuratreactive$obj <- RenameIdents(seuratreactive$obj, seuratreactive$new.cell.ids)
                          }
                          
-                         seuratreactive$markersMEGENA <- FindAllMarkers(seuratreactive$obj, logfc.threshold = input$log2FCMEGENA, min.pct = input$minMEGENA,
+                         if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "SCTransform" | 
+                             !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "SCTransform") {
+                           DEtestobj <- PrepSCTFindMarkers(seuratreactive$obj)
+                         }
+                         else {
+                           DEtestobj <- seuratreactive$obj
+                         }
+                         
+                         seuratreactive$markersMEGENA <- FindAllMarkers(DEtestobj, logfc.threshold = input$log2FCMEGENA, min.pct = input$minMEGENA,
                                                                         test.use = input$testuseMEGENA,
                                                                         only.pos = T)
                          
@@ -29354,7 +29346,15 @@ server <- function(input, output, session) {
                        
                        Idents(seuratreactive$obj) <- seuratreactive$obj@meta.data$seurat_clusters
                        
-                       seuratreactive$markersMEGENA <- FindAllMarkers(seuratreactive$obj, logfc.threshold = input$log2FCMEGENA, min.pct = input$minMEGENA,
+                       if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "SCTransform" | 
+                           !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "SCTransform") {
+                         DEtestobj <- PrepSCTFindMarkers(seuratreactive$obj)
+                       }
+                       else {
+                         DEtestobj <- seuratreactive$obj
+                       }
+                       
+                       seuratreactive$markersMEGENA <- FindAllMarkers(DEtestobj, logfc.threshold = input$log2FCMEGENA, min.pct = input$minMEGENA,
                                                                       test.use = input$testuseMEGENA,
                                                                       group.by = "seurat_clusters", only.pos = T)
                        
@@ -29383,7 +29383,15 @@ server <- function(input, output, session) {
                          seuratreactive$obj <- RenameIdents(seuratreactive$obj, seuratreactive$new.cell.ids)
                        }
                        
-                       seuratreactive$markersMEGENA <- FindAllMarkers(seuratreactive$obj, logfc.threshold = input$log2FCMEGENA, min.pct = input$minMEGENA,
+                       if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "SCTransform" | 
+                           !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "SCTransform") {
+                         DEtestobj <- PrepSCTFindMarkers(seuratreactive$obj)
+                       }
+                       else {
+                         DEtestobj <- seuratreactive$obj
+                       }
+                       
+                       seuratreactive$markersMEGENA <- FindAllMarkers(DEtestobj, logfc.threshold = input$log2FCMEGENA, min.pct = input$minMEGENA,
                                                                       test.use = input$testuseMEGENA,
                                                                       only.pos = T)
                        
@@ -29401,7 +29409,15 @@ server <- function(input, output, session) {
                        
                        Idents(seuratreactive$obj) <- seuratreactive$obj@meta.data$seurat_clusters
                        
-                       seuratreactive$markersMEGENA <- FindAllMarkers(seuratreactive$obj, logfc.threshold = input$log2FCMEGENA, min.pct = input$minMEGENA,
+                       if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "SCTransform" | 
+                           !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "SCTransform") {
+                         DEtestobj <- PrepSCTFindMarkers(seuratreactive$obj)
+                       }
+                       else {
+                         DEtestobj <- seuratreactive$obj
+                       }
+                       
+                       seuratreactive$markersMEGENA <- FindAllMarkers(DEtestobj, logfc.threshold = input$log2FCMEGENA, min.pct = input$minMEGENA,
                                                                       test.use = input$testuseMEGENA,
                                                                       group.by = "seurat_clusters", only.pos = T)
                        
@@ -29430,7 +29446,15 @@ server <- function(input, output, session) {
                          seuratreactive$obj <- RenameIdents(seuratreactive$obj, seuratreactive$new.cell.ids)
                        }
                        
-                       seuratreactive$markersMEGENA <- FindAllMarkers(seuratreactive$obj, logfc.threshold = input$log2FCMEGENA, min.pct = input$minMEGENA,
+                       if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "SCTransform" | 
+                           !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "SCTransform") {
+                         DEtestobj <- PrepSCTFindMarkers(seuratreactive$obj)
+                       }
+                       else {
+                         DEtestobj <- seuratreactive$obj
+                       }
+                       
+                       seuratreactive$markersMEGENA <- FindAllMarkers(DEtestobj, logfc.threshold = input$log2FCMEGENA, min.pct = input$minMEGENA,
                                                                       test.use = input$testuseMEGENA,
                                                                       only.pos = T)
                        
@@ -29549,7 +29573,7 @@ server <- function(input, output, session) {
         shinyalert("ERROR!", "No differentially expressed genes detected! You must compute your differentially expressed genes first! Refer to the differentially expressed genes tab.", type = "error", confirmButtonCol = "#337ab7")
         updatePickerInput(session, 'MEGENA_selectmethod', selected = "Variable Genes")
         updatePrettyRadioButtons(session, "radioMEGENAselect", selected = "Cell Type Module Activity")
-        }
+      }
       
       if (input$MEGENA_selectmethod == "Differentially Expressed Genes" && !is.null(seuratreactive$markersDE) && nrow(seuratreactive$markersDE) > 1000) {
         shinyalert("WARNING!", "You have more than 1,000 differentially expressed genes. Selecting a higher number of genes for co-expression module construction will drastically
@@ -29560,7 +29584,7 @@ server <- function(input, output, session) {
         shinyalert("ERROR!", "No custom differentially expressed genes detected! You must compute your custom differentially expressed genes first! Refer to the custom differentially expressed genes tab.", type = "error", confirmButtonCol = "#337ab7")
         updatePickerInput(session, 'MEGENA_selectmethod', selected = "Variable Genes")
         updatePrettyRadioButtons(session, "radioMEGENAselect", selected = "Cell Type Module Activity")
-        }
+      }
       
       if (input$MEGENA_selectmethod == "Custom Differentially Expressed Genes" && !is.null(seuratreactive$markersSDE) && nrow(seuratreactive$markersSDE) > 1000) {
         shinyalert("WARNING!", "You have more than 1,000 differentially expressed genes. Selecting a higher number of genes for co-expression module construction will drastically
@@ -29579,9 +29603,9 @@ server <- function(input, output, session) {
   
   observe({
     if (is.null(seuratreactive$markersDE)) {
-    if (input$radioMEGENAselect == "Differentially Expressed Genes (Number of DEGs)" | input$radioMEGENAselect == "Differentially Expressed Genes (Percentage of DEGs)") {
-      shinyalert("ERROR!", "No differentially expressed genes detected! You must compute your custom differentially expressed genes first! Refer to the differentially expressed genes tab.", type = "error", confirmButtonCol = "#337ab7")
-      updatePrettyRadioButtons(session, "radioMEGENAselect", selected = "Cell Type Module Activity")
+      if (input$radioMEGENAselect == "Differentially Expressed Genes (Number of DEGs)" | input$radioMEGENAselect == "Differentially Expressed Genes (Percentage of DEGs)") {
+        shinyalert("ERROR!", "No differentially expressed genes detected! You must compute your custom differentially expressed genes first! Refer to the differentially expressed genes tab.", type = "error", confirmButtonCol = "#337ab7")
+        updatePrettyRadioButtons(session, "radioMEGENAselect", selected = "Cell Type Module Activity")
       }
     }
     
@@ -29589,7 +29613,7 @@ server <- function(input, output, session) {
       if (input$radioMEGENAselect == "Custom Differentially Expressed Genes (Number of DEGs)" | input$radioMEGENAselect == "Custom Differentially Expressed Genes (Percentage of DEGs)") {
         shinyalert("ERROR!", "No custom differentially expressed genes detected! You must compute your custom differentially expressed genes first! Refer to the custom differentially expressed genes tab.", type = "error", confirmButtonCol = "#337ab7")
         updatePrettyRadioButtons(session, "radioMEGENAselect", selected = "Cell Type Module Activity")
-        }
+      }
     }
   })
   
@@ -29662,14 +29686,14 @@ server <- function(input, output, session) {
       colnames(module.table)[1] <- "id" # first column of module table must be labelled as "id".
       
       plot <- plot_module_hierarchy(module.table = module.table,label.scaleFactor = input$genefontMEGENA,
-                                             arrow.size = 0.015, node.label.color = "blue", edge.color = "red")
+                                    arrow.size = 0.015, node.label.color = "blue", edge.color = "red")
     }
     else {
-    plot <- plot_module(output.summary = seuratreactive$summary.output,PFN = seuratreactive$g,subset.module = input$MEGENA_modulesInput,
-                layout = "kamada.kawai",label.hubs.only = input$checkboxMEGENA,
-                gene.set = NULL,color.code =  "grey",
-                output.plot = FALSE, out.dir = "modulePlot",col.names = palette(rainbow(6)),label.scaleFactor = input$genefontMEGENA,
-                hubLabel.col = "black", label.alpha = input$TranspraentMEGENA, show.topn.hubs = Inf,show.legend = TRUE)
+      plot <- plot_module(output.summary = seuratreactive$summary.output,PFN = seuratreactive$g,subset.module = input$MEGENA_modulesInput,
+                          layout = "kamada.kawai",label.hubs.only = input$checkboxMEGENA,
+                          gene.set = NULL,color.code =  "grey",
+                          output.plot = FALSE, out.dir = "modulePlot",col.names = palette(rainbow(6)),label.scaleFactor = input$genefontMEGENA,
+                          hubLabel.col = "black", label.alpha = input$TranspraentMEGENA, show.topn.hubs = Inf,show.legend = TRUE)
     }
     plot[[1]]
   })
@@ -29687,106 +29711,106 @@ server <- function(input, output, session) {
       need(!is.null(seuratreactive$summary.output), 'Please compute your MEGENA co-expression modules'))
     
     if (input$radioMEGENAselect == "Cell Type Module Activity") {
-    simplelist <- vector(mode="list")
-    
-    for (i in unique(seuratreactive$markersMEGENA$Cluster)) {
-      simplelist[[i]] <- seuratreactive$markersMEGENA[seuratreactive$markersMEGENA$Cluster == i,]$`Gene Name`
-    }
-    
-    anotherlist <- vector(mode="list")
-    yetanotherlist <- vector(mode="list")
-    
-    for (i in names(seuratreactive$summary.output$modules)) {
-      anotherlist[[i]] <- mapply(function(x, y) {signif(length(intersect(x,y))*100/length(y), 4)}, simplelist, seuratreactive$summary.output$modules[i])
-      yetanotherlist[[i]] <- ifelse(all(anotherlist[[i]] == 0), "*Uncertain", names(which.max(anotherlist[[i]])))
-    }
-    
-    names <- as.data.frame(t(data.frame(yetanotherlist)))
-    
-    names <- names %>%
-      rownames_to_column(var="module.id")
-    
-    seuratreactive$anotherlist <- anotherlist
-    
-    # get some coloring (with log transform option)
-    mdf= seuratreactive$summary.output$module.table
-    
-    mdf <- full_join(mdf, names)
-    
-    mdf$V1 <- as.factor(mdf$V1)
-    
-    colnames(mdf)[7] <- "Cluster"
-    
-    seuratreactive$sunburst <- draw_sunburst_wt_fill(module.df = mdf,feat.col = "Cluster",
-                                                     fill.type = "discrete",
-                                                     id.col = "module.id",parent.col = "module.parent")
+      simplelist <- vector(mode="list")
+      
+      for (i in unique(seuratreactive$markersMEGENA$Cluster)) {
+        simplelist[[i]] <- seuratreactive$markersMEGENA[seuratreactive$markersMEGENA$Cluster == i,]$`Gene Name`
+      }
+      
+      anotherlist <- vector(mode="list")
+      yetanotherlist <- vector(mode="list")
+      
+      for (i in names(seuratreactive$summary.output$modules)) {
+        anotherlist[[i]] <- mapply(function(x, y) {signif(length(intersect(x,y))*100/length(y), 4)}, simplelist, seuratreactive$summary.output$modules[i])
+        yetanotherlist[[i]] <- ifelse(all(anotherlist[[i]] == 0), "*Uncertain", names(which.max(anotherlist[[i]])))
+      }
+      
+      names <- as.data.frame(t(data.frame(yetanotherlist)))
+      
+      names <- names %>%
+        rownames_to_column(var="module.id")
+      
+      seuratreactive$anotherlist <- anotherlist
+      
+      # get some coloring (with log transform option)
+      mdf= seuratreactive$summary.output$module.table
+      
+      mdf <- full_join(mdf, names)
+      
+      mdf$V1 <- as.factor(mdf$V1)
+      
+      colnames(mdf)[7] <- "Cluster"
+      
+      seuratreactive$sunburst <- draw_sunburst_wt_fill(module.df = mdf,feat.col = "Cluster",
+                                                       fill.type = "discrete",
+                                                       id.col = "module.id",parent.col = "module.parent")
     }
     else if (input$radioMEGENAselect == "Differentially Expressed Genes (Number of DEGs)") {
-
-          simplelist <- vector(mode="list")
-
-          simplelist[[1]] <- seuratreactive$markersDE$`Gene Name`
-
-          anotherlist <- vector(mode="list")
-
-          for (i in names(seuratreactive$summary.output$modules)) {
-            anotherlist[[i]] <- mapply(function(x, y) {signif(length(intersect(x,y)))}, simplelist, seuratreactive$summary.output$modules[i])
-          }
-
-          names <- as.data.frame(t(data.frame(anotherlist)))
-
-          names <- names %>%
-            rownames_to_column(var="module.id")
-          
-          seuratreactive$anotherlist <- anotherlist
-
-          # get some coloring (with log transform option)
-          mdf= seuratreactive$summary.output$module.table
-
-          mdf <- full_join(mdf, names)
-
-          mdf$V1 <- as.factor(mdf$V1)
-
-          colnames(mdf)[7] <- "Number of DEGs overlap in module"
-          mdf$`Number of DEGs overlap in module` <- as.numeric(mdf$`Number of DEGs overlap in module`)
-
-          seuratreactive$sunburst <- draw_sunburst_wt_fill(module.df = mdf,feat.col = "Number of DEGs overlap in module",
-                                            fill.type = "continuous", log.transform = F,
-                                            fill.scale = scale_fill_gradient2(low = "white",mid = "white",high = "red"),
-                                            id.col = "module.id",parent.col = "module.parent")
+      
+      simplelist <- vector(mode="list")
+      
+      simplelist[[1]] <- seuratreactive$markersDE$`Gene Name`
+      
+      anotherlist <- vector(mode="list")
+      
+      for (i in names(seuratreactive$summary.output$modules)) {
+        anotherlist[[i]] <- mapply(function(x, y) {signif(length(intersect(x,y)))}, simplelist, seuratreactive$summary.output$modules[i])
+      }
+      
+      names <- as.data.frame(t(data.frame(anotherlist)))
+      
+      names <- names %>%
+        rownames_to_column(var="module.id")
+      
+      seuratreactive$anotherlist <- anotherlist
+      
+      # get some coloring (with log transform option)
+      mdf= seuratreactive$summary.output$module.table
+      
+      mdf <- full_join(mdf, names)
+      
+      mdf$V1 <- as.factor(mdf$V1)
+      
+      colnames(mdf)[7] <- "Number of DEGs overlap in module"
+      mdf$`Number of DEGs overlap in module` <- as.numeric(mdf$`Number of DEGs overlap in module`)
+      
+      seuratreactive$sunburst <- draw_sunburst_wt_fill(module.df = mdf,feat.col = "Number of DEGs overlap in module",
+                                                       fill.type = "continuous", log.transform = F,
+                                                       fill.scale = scale_fill_gradient2(low = "white",mid = "white",high = "red"),
+                                                       id.col = "module.id",parent.col = "module.parent")
     }
     else if (input$radioMEGENAselect == "Differentially Expressed Genes (Percentage of DEGs)") {
-          simplelist <- vector(mode="list")
-
-          simplelist[[1]] <- seuratreactive$markersDE$`Gene Name`
-
-          anotherlist <- vector(mode="list")
-
-          for (i in names(seuratreactive$summary.output$modules)) {
-            anotherlist[[i]] <- mapply(function(x, y) {signif(length(intersect(x,y))*100/length(y))}, simplelist, seuratreactive$summary.output$modules[i])
-          }
-
-          names <- as.data.frame(t(data.frame(anotherlist)))
-
-          names <- names %>%
-            rownames_to_column(var="module.id")
-          
-          seuratreactive$anotherlist <- anotherlist
-
-          # get some coloring (with log transform option)
-          mdf= seuratreactive$summary.output$module.table
-
-          mdf <- full_join(mdf, names)
-
-          mdf$V1 <- as.factor(mdf$V1)
-
-          colnames(mdf)[7] <- "Percenatage of DEGs overlap in module"
-          mdf$`Percenatage of DEGs overlap in module` <- as.numeric(mdf$`Percenatage of DEGs overlap in module`)
-
-          seuratreactive$sunburst <- draw_sunburst_wt_fill(module.df = mdf,feat.col = "Percenatage of DEGs overlap in module",
-                                            fill.type = "continuous", log.transform = F,
-                                            fill.scale = scale_fill_gradient2(low = "white",mid = "white",high = "red"),
-                                            id.col = "module.id",parent.col = "module.parent")
+      simplelist <- vector(mode="list")
+      
+      simplelist[[1]] <- seuratreactive$markersDE$`Gene Name`
+      
+      anotherlist <- vector(mode="list")
+      
+      for (i in names(seuratreactive$summary.output$modules)) {
+        anotherlist[[i]] <- mapply(function(x, y) {signif(length(intersect(x,y))*100/length(y))}, simplelist, seuratreactive$summary.output$modules[i])
+      }
+      
+      names <- as.data.frame(t(data.frame(anotherlist)))
+      
+      names <- names %>%
+        rownames_to_column(var="module.id")
+      
+      seuratreactive$anotherlist <- anotherlist
+      
+      # get some coloring (with log transform option)
+      mdf= seuratreactive$summary.output$module.table
+      
+      mdf <- full_join(mdf, names)
+      
+      mdf$V1 <- as.factor(mdf$V1)
+      
+      colnames(mdf)[7] <- "Percenatage of DEGs overlap in module"
+      mdf$`Percenatage of DEGs overlap in module` <- as.numeric(mdf$`Percenatage of DEGs overlap in module`)
+      
+      seuratreactive$sunburst <- draw_sunburst_wt_fill(module.df = mdf,feat.col = "Percenatage of DEGs overlap in module",
+                                                       fill.type = "continuous", log.transform = F,
+                                                       fill.scale = scale_fill_gradient2(low = "white",mid = "white",high = "red"),
+                                                       id.col = "module.id",parent.col = "module.parent")
     }
     else if (input$radioMEGENAselect == "Custom Differentially Expressed Genes (Number of DEGs)") {
       
@@ -29864,9 +29888,9 @@ server <- function(input, output, session) {
       need(!is.null(seuratreactive$summary.output), 'Please compute your MEGENA co-expression modules'))
     
     if (input$radioMEGENAselect == "Cell Type Module Activity") {
-    df <- as.data.frame(seuratreactive$anotherlist)
-    
-    df <- df %>% rownames_to_column(var="Cluster")
+      df <- as.data.frame(seuratreactive$anotherlist)
+      
+      df <- df %>% rownames_to_column(var="Cluster")
     }
     else {
       df <- as.data.frame(seuratreactive$anotherlist)
@@ -30080,7 +30104,7 @@ server <- function(input, output, session) {
       if (input$SCENIC_selectmethod == "Differentially Expressed Genes" && is.null(seuratreactive$markersDE)) {
         shinyalert("ERROR!", "No differentially expressed genes detected! You must compute your differentially expressed genes first! Refer to the differentially expressed genes tab.", type = "error", confirmButtonCol = "#337ab7")
         updatePickerInput(session, 'SCENIC_selectmethod', selected = "Variable Genes")
-        }
+      }
       
       if (input$SCENIC_selectmethod == "Differentially Expressed Genes" && !is.null(seuratreactive$markersDE) && nrow(seuratreactive$markersDE) > 1000) {
         shinyalert("WARNING!", "You have more than 1,000 differentially expressed genes. Selecting a higher number of genes to include for analysis will drastically increase
@@ -30090,7 +30114,7 @@ server <- function(input, output, session) {
       if (input$SCENIC_selectmethod == "Custom Differentially Expressed Genes" && is.null(seuratreactive$markersSDE)) {
         shinyalert("ERROR!", "No custom differentially expressed genes detected! You must compute your custom differentially expressed genes first! Refer to the custom differentially expressed genes tab.", type = "error", confirmButtonCol = "#337ab7")
         updatePickerInput(session, 'SCENIC_selectmethod', selected = "Variable Genes")
-        }
+      }
       
       if (input$SCENIC_selectmethod == "Custom Differentially Expressed Genes" && !is.null(seuratreactive$markersSDE) && nrow(seuratreactive$markersSDE) > 1000) {
         shinyalert("WARNING!", "You have more than 1,000 differentially expressed genes. Selecting a higher number of genes to include for analysis will drastically increase
@@ -30139,13 +30163,17 @@ server <- function(input, output, session) {
                      seuratreactive$regulonActivity_byCellType_Scaled <- NULL
                      seuratreactive$rss <- NULL
                      
+                     source("runSCENIC_2_createRegulons.R")
+                     source("class_ScenicOptions.R")
+                     source("runGenie3.R")
+                     
                      unlink("int", recursive = TRUE)
                      unlink("output", recursive = TRUE)
                      
                      if (input$SCENIC_selectmethod == "Variable Genes") {
-                     seuratreactive$variablefeaturesSCENIC <- FindVariableFeatures(seuratreactive$obj, selection.method = "vst", nfeatures = input$variablegenesSCENIC)
-                     
-                     seuratreactive$variablefeaturesSCENIC <- VariableFeatures(seuratreactive$variablefeaturesSCENIC)
+                       seuratreactive$variablefeaturesSCENIC <- FindVariableFeatures(seuratreactive$obj, selection.method = "vst", nfeatures = input$variablegenesSCENIC)
+                       
+                       seuratreactive$variablefeaturesSCENIC <- VariableFeatures(seuratreactive$variablefeaturesSCENIC)
                      }
                      else if (input$SCENIC_selectmethod == "Differentially Expressed Genes") {
                        seuratreactive$variablefeaturesSCENIC <- seuratreactive$markersDE$`Gene Name`
@@ -30173,9 +30201,9 @@ server <- function(input, output, session) {
                      seuratreactive$cellInfo <- tibble::rownames_to_column(seuratreactive$cellInfo, "rownames")
                      
                      if (input$SCENIC_selectcluster == "Seurat Clusters") {
-                     seuratreactive$cellInfo <- seuratreactive$cellInfo %>% mutate(sample(100000, size = nrow(seuratreactive$cellInfo), replace = TRUE)) %>% 
-                       group_by(seurat_clusters) %>% 
-                       top_n(input$n_SCENIC)
+                       seuratreactive$cellInfo <- seuratreactive$cellInfo %>% mutate(sample(100000, size = nrow(seuratreactive$cellInfo), replace = TRUE)) %>% 
+                         group_by(seurat_clusters) %>% 
+                         top_n(input$n_SCENIC)
                      }
                      else {
                        seuratreactive$cellInfo <- seuratreactive$cellInfo %>% mutate(sample(100000, size = nrow(seuratreactive$cellInfo), replace = TRUE)) %>% 
@@ -30276,8 +30304,7 @@ server <- function(input, output, session) {
                      shinyjs::show("SCENICBox1")
                      shinyjs::show("SCENICBox2")
                      shinyjs::show("SCENICBox3")
-                     shinyjs::show("SCENICBox4")
-                  
+                     
                    })
     },
     error = function(e) {
@@ -30350,11 +30377,8 @@ server <- function(input, output, session) {
   
   observe({
     if (!is.null(seuratreactive$regulons)) {
-      updateVirtualSelect('Regulon_Select', choices = seuratreactive$regulons$Regulon, selected = seuratreactive$regulons$Regulon[1])
-    }
-    if (!is.null(seuratreactive$regulons)) {
       if (seuratreactive$SCENIC_selectmethod == "Seurat Clusters") {
-      updateVirtualSelect('Regulon_Select2', choices = c(unique(levels(seuratreactive$obj$seurat_clusters))), selected = c(unique(levels(seuratreactive$obj$seurat_clusters)))[1])
+        updateVirtualSelect('Regulon_Select2', choices = c(unique(levels(seuratreactive$obj$seurat_clusters))), selected = c(unique(levels(seuratreactive$obj$seurat_clusters)))[1])
       }
       else {
         updateVirtualSelect('Regulon_Select2', choices = c(unique(levels(seuratreactive$obj))), selected = c(unique(levels(seuratreactive$obj)))[1])
@@ -30375,6 +30399,10 @@ server <- function(input, output, session) {
     if (!is.null(seuratreactive$regulonnames)) {
       updateVirtualSelect('SCENICInput', choices = c("Please select from the following" = "", rownames(seuratreactive$regulonnames)))
     }
+  })
+  
+  output$plotSCENICUI <- renderUI({
+    plotlyOutput("plotSCENIC", height = (400 + input$SCENICplotheight*40))
   })
   
   output$plotSCENIC <- renderPlotly({
@@ -30692,13 +30720,14 @@ server <- function(input, output, session) {
       need(!is.null(seuratreactive$regulons), 'Please compute your marker genes'))
     
     if (input$radioSCENICrss == "All") {
-    rssPlot <- plotRSS(seuratreactive$rss)
-    p <- rssPlot$plot + theme(text = element_text(size=input$fontSCENIC2))
-    
-    ggplotly(p)
+      rssPlot <- plotRSS(seuratreactive$rss)
+      p <- rssPlot$plot + theme(text = element_text(size=input$fontSCENIC2))
+      
+      ggplotly(p)
     }
     else {
-      plotRSS_oneSet(seuratreactive$rss, setName = input$Regulon_Select2, n = length(rownames(seuratreactive$rss))-1) + theme(text = element_text(size=input$fontSCENIC2))
+      plotRSS_oneSet(seuratreactive$rss, setName = input$Regulon_Select2, n = length(rownames(seuratreactive$rss))-1) + 
+        theme(text = element_text(size=input$fontSCENIC2))
     }
   })
   
@@ -30789,24 +30818,6 @@ server <- function(input, output, session) {
         theme_graph() +
         guides(color = FALSE, edge_width = FALSE)
     }
-  })
-  
-  output$RegulonClusterSCENIC <- renderPlot({
-    validate(
-      need(!is.null(seuratreactive$plot.data), "You must complete the clustering step"))
-    validate(
-      need(!is.null(seuratreactive$regulons), 'Please compute your marker genes'))
-    
-    if (input$checkboxRegulonCluster == "UMAP") {
-      dr_coords <- Embeddings(seuratreactive$obj, reduction="umap")
-    }
-    else {
-      dr_coords <- Embeddings(seuratreactive$obj, reduction="tsne")
-    }
-    dr_coords <- dr_coords[,1:2]
-    
-    par(mfrow=c(1,3))
-    AUCell::AUCell_plotTSNE(dr_coords, cellsAUC=selectRegulons(seuratreactive$regulonAUC, input$Regulon_Select))
   })
   
   ####TAB 10 - MAGMA ####
@@ -31029,169 +31040,169 @@ server <- function(input, output, session) {
   
   observeEvent(input$MAGMAGOGOGO, {
     tryCatch({
-    withProgress(message = 'Please wait...',
-                 value = 0, {
-                   incProgress(1/10)
-                   
-                   removeModal()
-                   
-                   source("MAGMA_fixpath.R")
-                   source("MAGMA_getos.R")
-                   source("MAGMA_messageparallel.R")
-                   source("MAGMA_Gitdownload.R")
-                   source("MAGMA_messager.R")
-                   source("MAGMA_importmeta.R")
-                   source("MAGMA_importmagmafiles.R")
-                   
-                   if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "LogNormalize" | 
-                       !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "LogNormalize") {
-                     exp <- seuratreactive$obj@assays$RNA@data
-                   }
-                   else {
-                     exp <- seuratreactive$obj@assays$SCT@data
-                   }
-                   
-                   cellInfo <- FetchData(object = seuratreactive$obj, vars = c("orig.ident", "ident", "seurat_clusters"))
-                   
-                   cellInfo <- cellInfo[cellInfo$orig.ident %in% input$MAGMA_samples, ]
-                   
-                   cellInfo <- tibble::rownames_to_column(cellInfo, "rownames")
-                   
-                   if (input$MAGMA_selectcluster == "Seurat Clusters") {
-                     cellInfo <- cellInfo %>% mutate(sample(100000, size = nrow(cellInfo), replace = TRUE)) %>% 
-                       group_by(seurat_clusters) %>% 
-                       top_n(input$n_MAGMA2)
-                   }
-                   else {
-                     cellInfo <- cellInfo %>% mutate(sample(100000, size = nrow(cellInfo), replace = TRUE)) %>% 
-                       group_by(ident) %>% 
-                       top_n(input$n_MAGMA2)
-                   }
-                   
-                   cellInfo <- cellInfo %>% remove_rownames %>% column_to_rownames(var="rownames")
-                   
-                   exp <- exp[, colnames(exp) %in% rownames(cellInfo)]
-                   
-                   #Set up CTD
-                   if (input$MAGMA_selectcluster == "Seurat Clusters") {
-                     annotLevels <- list(as.character(cellInfo$seurat_clusters))
-                   }
-                   else {
-                     annotLevels <- list(as.character(cellInfo$ident))
-                   }
-                   
-                   if (seuratreactive$PAREACTOME == "sscrofa") {
-                   CTD <- EWCE::generate_celltype_data(
-                     exp = exp,
-                     annotLevels = annotLevels,
-                     groupName = "Seurat",
-                     input_species = "hsapiens",
-                     return_ctd=TRUE) 
-                   }
-                   else {
-                     CTD <- EWCE::generate_celltype_data(
-                       exp = exp,
-                       annotLevels = annotLevels,
-                       groupName = "Seurat",
-                       input_species = seuratreactive$PAREACTOME,
-                       return_ctd=TRUE) 
-                   }
-                   
-                   table <- seuratreactive$meta[,c(1:2)]
-                   colnames(table) <- c("GWAS", "Trait")
-                   
-                   seuratreactive$magma_dirs <- import_magma_files(ids = input$MAGMA_GWAS)
-                   
-                   if (!is.null(seuratreactive$genesOutPath2)) {
-                     combineddir <- c(seuratreactive$genesOutPath2, seuratreactive$magma_dirs)
-                   }
-                   else {
-                   combineddir <- seuratreactive$magma_dirs
-                   }
-                   
-                   if (seuratreactive$PAREACTOME == "sscrofa") {
-                     MAGMA_results <- celltype_associations_pipeline(
-                       magma_dirs = combineddir,
-                       ctd = CTD$ctd,
-                       ctd_species = "hsapiens", 
-                       ctd_name = "scRNA-seq_Dataset", 
-                       run_linear = TRUE, 
-                       run_top10 = TRUE,
-                       force_new = TRUE,
-                       save_dir = NULL,
-                       standardise = T)
-                   }
-                   else {
-                     MAGMA_results <- celltype_associations_pipeline(
-                       magma_dirs = combineddir,
-                       ctd = CTD$ctd,
-                       ctd_species = seuratreactive$PAREACTOME, 
-                       ctd_name = "scRNA-seq_Dataset", 
-                       run_linear = TRUE, 
-                       run_top10 = TRUE,
-                       force_new = TRUE,
-                       save_dir = NULL,
-                       standardise = T)
-                   }
-                   
-                   if (input$Linearmode2 == TRUE) {
-                   merged_results <- MAGMA.Celltyping::merge_results(
-                     MAGMA_results = MAGMA_results,
-                     filetype = "ctAssocMerged")
-                   }
-                   else {
-                     merged_results <- MAGMA.Celltyping::merge_results(
-                       MAGMA_results = MAGMA_results,
-                       filetype = "ctAssocsLinear")
-                   }
-                   
-                   merged_results$GWAS <- sub("\\..+", "", merged_results$GWAS)
-                   
-                   merged_results$GWAS <- sub("^0$", input$textlabelMAGMA, merged_results$GWAS)
-                   
-                   seuratreactive$MAGMA_Final_Results <- full_join(merged_results, table)
-                   
-                   seuratreactive$MAGMA_Final_Results$Trait[is.na(seuratreactive$MAGMA_Final_Results$Trait)] <- seuratreactive$MAGMA_Final_Results$GWAS[which(is.na(seuratreactive$MAGMA_Final_Results$Trait))]
-                   
-                   seuratreactive$MAGMA_Final_Results <- na.omit(seuratreactive$MAGMA_Final_Results)
-                   
-                   incProgress(10/10)
-
-                   if (!is.null(seuratreactive$genesOutPath2)) {
-                     seuratreactive$MAGMA_samples <- input$MAGMA_samples
-                     seuratreactive$MAGMA_GWAS <- input$MAGMA_GWAS
-                     seuratreactive$MAGMA_selectcluster <- input$MAGMA_selectcluster
-                     seuratreactive$n_MAGMA2 <- input$n_MAGMA2
+      withProgress(message = 'Please wait...',
+                   value = 0, {
+                     incProgress(1/10)
                      
-                     seuratreactive$MAGMA_samples2 <- input$MAGMA_samples
-                     seuratreactive$MAGMA_selectcluster2 <- input$MAGMA_selectcluster
-                     seuratreactive$textlabelMAGMA <- input$textlabelMAGMA
-                     seuratreactive$MAGMA_N <- input$MAGMA_N
-                     seuratreactive$GRCh <- input$GRCh
-                     seuratreactive$MAGMA_Pop <- input$MAGMA_Pop
-                     seuratreactive$n_MAGMA <- input$n_MAGMA2
-                   }
-                   else {
-                     seuratreactive$MAGMA_samples <- input$MAGMA_samples
-                     seuratreactive$MAGMA_GWAS <- input$MAGMA_GWAS
-                     seuratreactive$MAGMA_selectcluster <- input$MAGMA_selectcluster
-                     seuratreactive$n_MAGMA2 <- input$n_MAGMA2
+                     removeModal()
                      
-                     seuratreactive$MAGMA_samples2 <- NULL
-                     seuratreactive$MAGMA_selectcluster2 <- NULL
-                     seuratreactive$textlabelMAGMA <- NULL
-                     seuratreactive$MAGMA_N <- NULL
-                     seuratreactive$GRCh <- NULL
-                     seuratreactive$MAGMA_Pop <- NULL
-                     seuratreactive$n_MAGMA <- NULL
-                   }
-                   
-                 })
+                     source("MAGMA_fixpath.R")
+                     source("MAGMA_getos.R")
+                     source("MAGMA_messageparallel.R")
+                     source("MAGMA_Gitdownload.R")
+                     source("MAGMA_messager.R")
+                     source("MAGMA_importmeta.R")
+                     source("MAGMA_importmagmafiles.R")
+                     
+                     if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "LogNormalize" | 
+                         !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "LogNormalize") {
+                       exp <- seuratreactive$obj@assays$RNA@data
+                     }
+                     else {
+                       exp <- seuratreactive$obj@assays$SCT@data
+                     }
+                     
+                     cellInfo <- FetchData(object = seuratreactive$obj, vars = c("orig.ident", "ident", "seurat_clusters"))
+                     
+                     cellInfo <- cellInfo[cellInfo$orig.ident %in% input$MAGMA_samples, ]
+                     
+                     cellInfo <- tibble::rownames_to_column(cellInfo, "rownames")
+                     
+                     if (input$MAGMA_selectcluster == "Seurat Clusters") {
+                       cellInfo <- cellInfo %>% mutate(sample(100000, size = nrow(cellInfo), replace = TRUE)) %>% 
+                         group_by(seurat_clusters) %>% 
+                         top_n(input$n_MAGMA2)
+                     }
+                     else {
+                       cellInfo <- cellInfo %>% mutate(sample(100000, size = nrow(cellInfo), replace = TRUE)) %>% 
+                         group_by(ident) %>% 
+                         top_n(input$n_MAGMA2)
+                     }
+                     
+                     cellInfo <- cellInfo %>% remove_rownames %>% column_to_rownames(var="rownames")
+                     
+                     exp <- exp[, colnames(exp) %in% rownames(cellInfo)]
+                     
+                     #Set up CTD
+                     if (input$MAGMA_selectcluster == "Seurat Clusters") {
+                       annotLevels <- list(as.character(cellInfo$seurat_clusters))
+                     }
+                     else {
+                       annotLevels <- list(as.character(cellInfo$ident))
+                     }
+                     
+                     if (seuratreactive$PAREACTOME == "sscrofa") {
+                       CTD <- EWCE::generate_celltype_data(
+                         exp = exp,
+                         annotLevels = annotLevels,
+                         groupName = "Seurat",
+                         input_species = "hsapiens",
+                         return_ctd=TRUE) 
+                     }
+                     else {
+                       CTD <- EWCE::generate_celltype_data(
+                         exp = exp,
+                         annotLevels = annotLevels,
+                         groupName = "Seurat",
+                         input_species = seuratreactive$PAREACTOME,
+                         return_ctd=TRUE) 
+                     }
+                     
+                     table <- seuratreactive$meta[,c(1:2)]
+                     colnames(table) <- c("GWAS", "Trait")
+                     
+                     seuratreactive$magma_dirs <- import_magma_files(ids = input$MAGMA_GWAS)
+                     
+                     if (!is.null(seuratreactive$genesOutPath2)) {
+                       combineddir <- c(seuratreactive$genesOutPath2, seuratreactive$magma_dirs)
+                     }
+                     else {
+                       combineddir <- seuratreactive$magma_dirs
+                     }
+                     
+                     if (seuratreactive$PAREACTOME == "sscrofa") {
+                       MAGMA_results <- celltype_associations_pipeline(
+                         magma_dirs = combineddir,
+                         ctd = CTD$ctd,
+                         ctd_species = "hsapiens", 
+                         ctd_name = "scRNA-seq_Dataset", 
+                         run_linear = TRUE, 
+                         run_top10 = TRUE,
+                         force_new = TRUE,
+                         save_dir = NULL,
+                         standardise = T)
+                     }
+                     else {
+                       MAGMA_results <- celltype_associations_pipeline(
+                         magma_dirs = combineddir,
+                         ctd = CTD$ctd,
+                         ctd_species = seuratreactive$PAREACTOME, 
+                         ctd_name = "scRNA-seq_Dataset", 
+                         run_linear = TRUE, 
+                         run_top10 = TRUE,
+                         force_new = TRUE,
+                         save_dir = NULL,
+                         standardise = T)
+                     }
+                     
+                     if (input$Linearmode2 == TRUE) {
+                       merged_results <- MAGMA.Celltyping::merge_results(
+                         MAGMA_results = MAGMA_results,
+                         filetype = "ctAssocMerged")
+                     }
+                     else {
+                       merged_results <- MAGMA.Celltyping::merge_results(
+                         MAGMA_results = MAGMA_results,
+                         filetype = "ctAssocsLinear")
+                     }
+                     
+                     merged_results$GWAS <- sub("\\..+", "", merged_results$GWAS)
+                     
+                     merged_results$GWAS <- sub("^0$", input$textlabelMAGMA, merged_results$GWAS)
+                     
+                     seuratreactive$MAGMA_Final_Results <- full_join(merged_results, table)
+                     
+                     seuratreactive$MAGMA_Final_Results$Trait[is.na(seuratreactive$MAGMA_Final_Results$Trait)] <- seuratreactive$MAGMA_Final_Results$GWAS[which(is.na(seuratreactive$MAGMA_Final_Results$Trait))]
+                     
+                     seuratreactive$MAGMA_Final_Results <- na.omit(seuratreactive$MAGMA_Final_Results)
+                     
+                     incProgress(10/10)
+                     
+                     if (!is.null(seuratreactive$genesOutPath2)) {
+                       seuratreactive$MAGMA_samples <- input$MAGMA_samples
+                       seuratreactive$MAGMA_GWAS <- input$MAGMA_GWAS
+                       seuratreactive$MAGMA_selectcluster <- input$MAGMA_selectcluster
+                       seuratreactive$n_MAGMA2 <- input$n_MAGMA2
+                       
+                       seuratreactive$MAGMA_samples2 <- input$MAGMA_samples
+                       seuratreactive$MAGMA_selectcluster2 <- input$MAGMA_selectcluster
+                       seuratreactive$textlabelMAGMA <- input$textlabelMAGMA
+                       seuratreactive$MAGMA_N <- input$MAGMA_N
+                       seuratreactive$GRCh <- input$GRCh
+                       seuratreactive$MAGMA_Pop <- input$MAGMA_Pop
+                       seuratreactive$n_MAGMA <- input$n_MAGMA2
+                     }
+                     else {
+                       seuratreactive$MAGMA_samples <- input$MAGMA_samples
+                       seuratreactive$MAGMA_GWAS <- input$MAGMA_GWAS
+                       seuratreactive$MAGMA_selectcluster <- input$MAGMA_selectcluster
+                       seuratreactive$n_MAGMA2 <- input$n_MAGMA2
+                       
+                       seuratreactive$MAGMA_samples2 <- NULL
+                       seuratreactive$MAGMA_selectcluster2 <- NULL
+                       seuratreactive$textlabelMAGMA <- NULL
+                       seuratreactive$MAGMA_N <- NULL
+                       seuratreactive$GRCh <- NULL
+                       seuratreactive$MAGMA_Pop <- NULL
+                       seuratreactive$n_MAGMA <- NULL
+                     }
+                     
+                   })
     },
     error = function(e) {
       shinyalert("ERROR!", "MAGMA Computation Failed. One or more of your selected GWAS datasets were not formatted correctly, please try another GWAS dataset. Please also check if your dataset species is supported. Try linear enrichment only.", type = "error", confirmButtonCol = "#337ab7")
       seuratreactive$magma_dirs <- NULL
-      })
+    })
   })
   
   observeEvent(input$MAGMAGO2GOGO, {
@@ -31396,7 +31407,7 @@ server <- function(input, output, session) {
     error = function(e) {
       shinyalert("ERROR!", "MAGMA Computation Failed. One or more of your selected GWAS datasets were not formatted correctly, please try another GWAS dataset. Please also check if your dataset species is supported. Try Linear enrichment only.", type = "error", confirmButtonCol = "#337ab7")
       seuratreactive$genesOutPath2 <- NULL
-      })
+    })
   })
   
   observeEvent(input$MAGMAGO2, {
@@ -31603,6 +31614,10 @@ server <- function(input, output, session) {
                             , selected = seuratreactive$TA_pickercluster)
       }
     }
+  })
+  
+  output$plotTAUI <- renderUI({
+    plotlyOutput("plotTA", height = (400 + input$TAplotheight*40))
   })
   
   output$plotTA <- renderPlotly({
@@ -31891,9 +31906,9 @@ server <- function(input, output, session) {
                      
                      #Calculating trajectories with monocle3
                      seuratreactive$seurat_monocle <- as.cell_data_set(seuratreactive$obj)
-
+                     
                      seuratreactive$seurat_monocle <- cluster_cells(cds = seuratreactive$seurat_monocle, reduction_method = "UMAP")
-
+                     
                      seuratreactive$seurat_monocle <- learn_graph(seuratreactive$seurat_monocle)
                      
                      incProgress(3/10)
@@ -31923,7 +31938,7 @@ server <- function(input, output, session) {
                        metadata = seuratreactive$seurat_monocle@principal_graph_aux@listData$UMAP$pseudotime,
                        col.name = "Pseudotime"
                      )
-
+                     
                      IdentifiersTA <- FetchData(object = seuratreactive$obj, vars = c("seurat_clusters", "orig.ident",
                                                                                       "nFeature_RNA", "nCount_RNA", "percent.ribo", "percent.mt", "Phase", "ident",
                                                                                       "Pseudotime"))
@@ -31970,7 +31985,7 @@ server <- function(input, output, session) {
                      
                      removeModal()
                      
-                     seuratreactive$Monocle3_genes <- graph_test(seuratreactive$seurat_monocle, neighbor_graph="principal_graph", cores=8)
+                     seuratreactive$Monocle3_genes <- graph_test(seuratreactive$seurat_monocle, neighbor_graph="principal_graph", cores=10)
                      
                      incProgress(9/10)
                      seuratreactive$Monocle3_genes <- seuratreactive$Monocle3_genes[,-1]
@@ -31983,6 +31998,10 @@ server <- function(input, output, session) {
     error = function(e) {
       shinyalert("ERROR!", "Trajectory Analysis failed, try select a different root.", type = "error", confirmButtonCol = "#337ab7")
     })
+  })
+  
+  output$plotmonocleTAUI <- renderUI({
+    plotlyOutput("plotmonocleTA", height = (400 + input$TA2plotheight*40))
   })
   
   output$plotmonocleTA <- renderPlotly({
@@ -31999,7 +32018,9 @@ server <- function(input, output, session) {
         cell_size = input$sizemonocleTA/4,
         graph_label_size = input$sizemonocleTA,
         alpha = input$opacitymonocleTA
-      ) + theme(text = element_text(size=input$labelsizemonocleTA))
+      ) + theme(text = element_text(size=input$labelsizemonocleTA),
+                axis.text.x= element_text(size = input$labelsizemonocleTA),
+                axis.text.y= element_text(size = input$labelsizemonocleTA))
     }
     else if (input$reductionmethodTA == "3D") {
       plot_cells_3d(
@@ -32008,7 +32029,9 @@ server <- function(input, output, session) {
         reduction_method = "UMAP",
         cell_size = input$sizemonocleTA*20,
         alpha = input$opacitymonocleTA
-      ) + theme(text = element_text(size=input$labelsizemonocleTA))
+      ) + theme(text = element_text(size=input$labelsizemonocleTA),
+                axis.text.x= element_text(size = input$labelsizemonocleTA),
+                axis.text.y= element_text(size = input$labelsizemonocleTA))
     }
   })
   
@@ -32035,11 +32058,11 @@ server <- function(input, output, session) {
     validate(
       need(!is.null(input$MonocleInput), "Please select your gene of interest"))
     
-      fData(seuratreactive$seurat_monocle)$gene_short_name <- rownames(fData(seuratreactive$seurat_monocle))
-      
-      my_genes <- row.names(subset(fData(seuratreactive$seurat_monocle), gene_short_name %in% input$MonocleInput)) 
-      cds_subset <- seuratreactive$seurat_monocle[my_genes,]
-      plot_genes_in_pseudotime(cds_subset, color_cells_by = "monocle3_pseudotime") + theme_bw(base_size = input$fontsizemonocle3select) + guides(colour = FALSE)
+    fData(seuratreactive$seurat_monocle)$gene_short_name <- rownames(fData(seuratreactive$seurat_monocle))
+    
+    my_genes <- row.names(subset(fData(seuratreactive$seurat_monocle), gene_short_name %in% input$MonocleInput)) 
+    cds_subset <- seuratreactive$seurat_monocle[my_genes,]
+    plot_genes_in_pseudotime(cds_subset, color_cells_by = "monocle3_pseudotime") + theme_bw(base_size = input$fontsizemonocle3select) + guides(colour = FALSE)
   })
   
   output$monocle3vizUI <- renderUI({
@@ -32053,14 +32076,14 @@ server <- function(input, output, session) {
       need(!is.null(seuratreactive$seurat_monocle), "Please select your root cells and compute trajectories"))
     
     if (input$monocle3pseudo == "Seurat Clusters") {
-    seuratreactive$seurat_monocle$monocle3_pseudotime <- pseudotime(seuratreactive$seurat_monocle)
-    data.pseudo <- as.data.frame(colData(seuratreactive$seurat_monocle))
-    
-    ggplot(data.pseudo, aes(monocle3_pseudotime, reorder(seurat_clusters, monocle3_pseudotime), fill = seurat_clusters)) + 
-      geom_boxplot() + 
-      ylab("Seurat Clusters") +
-      xlab("Monocle3 Pseudotime") +
-      theme_bw(base_size = input$fontsizepseudotimeviz)
+      seuratreactive$seurat_monocle$monocle3_pseudotime <- pseudotime(seuratreactive$seurat_monocle)
+      data.pseudo <- as.data.frame(colData(seuratreactive$seurat_monocle))
+      
+      ggplot(data.pseudo, aes(monocle3_pseudotime, reorder(seurat_clusters, monocle3_pseudotime), fill = seurat_clusters)) + 
+        geom_boxplot() + 
+        ylab("Seurat Clusters") +
+        xlab("Monocle3 Pseudotime") +
+        theme_bw(base_size = input$fontsizepseudotimeviz)
     }
     else {
       seuratreactive$seurat_monocle$monocle3_pseudotime <- pseudotime(seuratreactive$seurat_monocle)
@@ -32414,19 +32437,19 @@ server <- function(input, output, session) {
       updateVirtualSelect('source_selectM', choices = unique(c(rownames(seuratreactive$cellchatM@net[[1]]$weight), rownames(seuratreactive$cellchatM@net[[2]]$weight))))
     }
   })
-
+  
   observe({
     if (!is.null(seuratreactive$cellchatM)) {
       updateVirtualSelect('source_selectMM', choices = unique(c(rownames(seuratreactive$cellchatM@net[[1]]$weight), rownames(seuratreactive$cellchatM@net[[2]]$weight))))
     }
   })
-
+  
   observe({
     if (!is.null(seuratreactive$cellchatM)) {
       updateVirtualSelect('target_selectM', choices = unique(c(rownames(seuratreactive$cellchatM@net[[1]]$weight), rownames(seuratreactive$cellchatM@net[[2]]$weight))))
     }
   })
-
+  
   observe({
     if (!is.null(seuratreactive$cellchatM)) {
       updateVirtualSelect('target_selectMM', choices = unique(c(rownames(seuratreactive$cellchatM@net[[1]]$weight), rownames(seuratreactive$cellchatM@net[[2]]$weight))))
@@ -32701,12 +32724,12 @@ server <- function(input, output, session) {
                      
                      seuratreactive$cellchat <- computeNetSimilarity(seuratreactive$cellchat, type = "functional")
                      seuratreactive$cellchat <- netEmbedding(seuratreactive$cellchat, type = "functional", umap.method = "uwot")
-                     seuratreactive$cellchat <- netClustering(seuratreactive$cellchat, type = "functional", do.plot = F, nCores = 8)
+                     seuratreactive$cellchat <- netClustering(seuratreactive$cellchat, type = "functional", do.plot = F, nCores = 10)
                      
                      incProgress(18/20)
                      seuratreactive$cellchat <- computeNetSimilarity(seuratreactive$cellchat, type = "structural")
                      seuratreactive$cellchat <- netEmbedding(seuratreactive$cellchat, type = "structural", umap.method = "uwot")
-                     seuratreactive$cellchat <- netClustering(seuratreactive$cellchat, type = "structural", do.plot = F, nCores = 8)
+                     seuratreactive$cellchat <- netClustering(seuratreactive$cellchat, type = "structural", do.plot = F, nCores = 10)
                      
                      seuratreactive$cellchat <- identifyCommunicationPatterns(seuratreactive$cellchat, pattern = "incoming", k = input$Patterns_Select, heatmap.show = F)
                      seuratreactive$cellchat <- identifyCommunicationPatterns(seuratreactive$cellchat, pattern = "outgoing", k = input$Patterns_Select, heatmap.show = F)
@@ -33184,11 +33207,11 @@ server <- function(input, output, session) {
                      
                      seuratreactive$cellchatM <- computeNetSimilarityPairwise(seuratreactive$cellchatM, type = "functional")
                      seuratreactive$cellchatM <- netEmbedding(seuratreactive$cellchatM, type = "functional", umap.method = "uwot")
-                     seuratreactive$cellchatM <- netClustering(seuratreactive$cellchatM, type = "functional", do.plot = F, nCores = 8)
+                     seuratreactive$cellchatM <- netClustering(seuratreactive$cellchatM, type = "functional", do.plot = F, nCores = 10)
                      
                      seuratreactive$cellchatM <- computeNetSimilarityPairwise(seuratreactive$cellchatM, type = "structural")
                      seuratreactive$cellchatM <- netEmbedding(seuratreactive$cellchatM, type = "structural", umap.method = "uwot")
-                     seuratreactive$cellchatM <- netClustering(seuratreactive$cellchatM, type = "structural", do.plot = F, nCores = 8)
+                     seuratreactive$cellchatM <- netClustering(seuratreactive$cellchatM, type = "structural", do.plot = F, nCores = 10)
                      
                      incProgress(40/40)
                      
@@ -33747,6 +33770,10 @@ server <- function(input, output, session) {
     }) 
   })
   
+  output$plotMM1UI <- renderUI({
+    plotlyOutput("plotMM1", height = (400 + input$MMplotheight*40))
+  })
+  
   output$plotMM1 <- renderPlotly({
     validate(
       need(!is.null(seuratreactive$plot.dataM$`Gene expression`), 'You must select a gene first to view its expression'))
@@ -34038,6 +34065,10 @@ server <- function(input, output, session) {
     }
   })
   
+  output$plotMM2UI <- renderUI({
+    plotlyOutput("plotMM2", height = (400 + input$MMplotheight*40))
+  })
+  
   output$plotMM2 <- renderPlotly({
     validate(
       need(!is.null(seuratreactive$plot.dataMM$`Gene expression`), 'You must select a gene first to view its expression'))
@@ -34252,7 +34283,7 @@ server <- function(input, output, session) {
                                    "<br>Ribosomal percentage: ", seuratreactive$plot.dataMM$`Ribosomal Percentage`,
                                    "<br>Gene Expression: ", seuratreactive$plot.dataMM$`Gene expression`)
         ) %>% layout(font = list(size = input$labelsizeMM))
-         
+        
       }
       else if (input$radioMM == "3D UMAP") {
         plot_ly(data = seuratreactive$plot.dataMM, 
@@ -34341,25 +34372,37 @@ server <- function(input, output, session) {
     
     if (input$checkboxvlnMM == TRUE) {
       if (input$VlnInputMM == "Seurat Clusters") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", group.by = "seurat_clusters", split.by = "orig.ident", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM))
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", group.by = "seurat_clusters", split.by = "orig.ident", pt.size = input$VlnptMM) + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM <- p
         p
       }
       else if (input$VlnInputMM == "Labelled Cells") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", pt.size = input$VlnptMM, split.by = "orig.ident") + theme(text = element_text(size=input$VlnsizeMM))
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", pt.size = input$VlnptMM, split.by = "orig.ident") + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM <- p
         p
       }
       else if (input$VlnInputMM == "Sample") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", group.by = "orig.ident", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM))  
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", group.by = "orig.ident", pt.size = input$VlnptMM) + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM <- p
         p
       }
       else if (input$VlnInputMM == "Cell Cycle Phase") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", group.by = "Phase", pt.size = input$VlnptMM, split.by = "orig.ident") + theme(text = element_text(size=input$VlnsizeMM))
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", group.by = "Phase", pt.size = input$VlnptMM, split.by = "orig.ident") + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM <- p
         p
@@ -34367,25 +34410,37 @@ server <- function(input, output, session) {
     }
     else {
       if (input$VlnInputMM == "Seurat Clusters") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", group.by = "seurat_clusters", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM))
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", group.by = "seurat_clusters", pt.size = input$VlnptMM) + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM <- p
         p
       }
       else if (input$VlnInputMM == "Labelled Cells") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM))
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", pt.size = input$VlnptMM) + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM <- p
         p
       }
       else if (input$VlnInputMM == "Sample") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", group.by = "orig.ident", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM)) 
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", group.by = "orig.ident", pt.size = input$VlnptMM) + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM <- p
         p
       }
       else if (input$VlnInputMM == "Cell Cycle Phase") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", group.by = "Phase", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM))
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM", group.by = "Phase", pt.size = input$VlnptMM) + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM <- p
         p
@@ -34399,25 +34454,37 @@ server <- function(input, output, session) {
     
     if (input$checkboxvlnMM == TRUE) {
       if (input$VlnInputMM == "Seurat Clusters") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", group.by = "seurat_clusters", split.by = "orig.ident", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM))
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", group.by = "seurat_clusters", split.by = "orig.ident", pt.size = input$VlnptMM) + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM2 <- p
         p
       }
       else if (input$VlnInputMM == "Labelled Cells") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", split.by = "orig.ident", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM))
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", split.by = "orig.ident", pt.size = input$VlnptMM) +
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM2 <- p
         p
       }
       else if (input$VlnInputMM == "Sample") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", group.by = "orig.ident", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM))
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", group.by = "orig.ident", pt.size = input$VlnptMM) + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM2 <- p
         p
       }
       else if (input$VlnInputMM == "Cell Cycle Phase") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", group.by = "Phase", split.by = "orig.ident", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM))
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", group.by = "Phase", split.by = "orig.ident", pt.size = input$VlnptMM) + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM2 <- p
         p
@@ -34426,25 +34493,37 @@ server <- function(input, output, session) {
     
     else {
       if (input$VlnInputMM == "Seurat Clusters") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", group.by = "seurat_clusters", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM))
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", group.by = "seurat_clusters", pt.size = input$VlnptMM) + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM2 <- p
         p
       }
       else if (input$VlnInputMM == "Labelled Cells") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM))  
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", pt.size = input$VlnptMM) + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM2 <- p
         p
       }
       else if (input$VlnInputMM == "Sample") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", group.by = "orig.ident", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM))  
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", group.by = "orig.ident", pt.size = input$VlnptMM) + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM2 <- p
         p
       }
       else if (input$VlnInputMM == "Cell Cycle Phase") {
-        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", group.by = "Phase", pt.size = input$VlnptMM) + theme(text = element_text(size=input$VlnsizeMM))
+        p <- VlnPlot(seuratreactive$obj, features = "Gene_ExpressionMM2", group.by = "Phase", pt.size = input$VlnptMM) + 
+          theme(text = element_text(size=input$VlnsizeMM),
+                axis.text.x= element_text(size = input$VlnsizeMM),
+                axis.text.y= element_text(size = input$VlnsizeMM))
         p[[1]][["labels"]][["title"]] <- seuratreactive$titleMM
         seuratreactive$pMM2 <- p
         p
@@ -34543,14 +34622,17 @@ server <- function(input, output, session) {
     if (is.null(input$SelectComparison) | !is.null(input$SelectComparison) && input$SelectComparison == "") {
       shinyjs::hide("DEBox1a")
       shinyjs::hide("DEBox1b")
+      updatePickerInput(session, "plotclustersDE", selected = "Sample")
     }
     if (input$SelectComparison == "Between Clusters") {
       shinyjs::show("DEBox1a")
       shinyjs::hide("DEBox1b")
+      updatePickerInput(session, "plotclustersDE", selected = "Differential Expression")
     }
     if (input$SelectComparison == "Between Samples") {
       shinyjs::hide("DEBox1a")
       shinyjs::show("DEBox1b")
+      updatePickerInput(session, "plotclustersDE", selected = "Differential Expression")
     }
   })
   
@@ -35058,7 +35140,15 @@ server <- function(input, output, session) {
                        
                        if (input$DE_clusters == "Seurat Clusters") {
                          
-                         markersDE <- FindMarkers(seuratreactive$obj, ident.1 = input$DEInput1, ident.2 = input$DEInput2, group.by = "seurat_clusters",
+                         if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "SCTransform" | 
+                             !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "SCTransform") {
+                           DEtestobj <- PrepSCTFindMarkers(seuratreactive$obj)
+                         }
+                         else {
+                           DEtestobj <- seuratreactive$obj
+                         }
+                         
+                         markersDE <- FindMarkers(DEtestobj, ident.1 = input$DEInput1, ident.2 = input$DEInput2, group.by = "seurat_clusters", only.pos = input$onlyposDE,
                                                   logfc.threshold = input$logDE, min.pct = input$minDE,
                                                   test.use = input$testuseDE)
                          
@@ -35138,6 +35228,7 @@ server <- function(input, output, session) {
                          
                          incProgress(10/10)
                          
+                         seuratreactive$onlyposDE <- input$onlyposDE
                          seuratreactive$DEInput1_samples <- input$DEInput1_samples
                          seuratreactive$DEInput2_samples <- input$DEInput2_samples
                          seuratreactive$DECluster <- input$DECluster
@@ -35164,7 +35255,15 @@ server <- function(input, output, session) {
                            seuratreactive$obj <- RenameIdents(seuratreactive$obj, seuratreactive$new.cell.ids)
                          }
                          
-                         markersDE <- FindMarkers(seuratreactive$obj, ident.1 = input$DEInput1, ident.2 = input$DEInput2,
+                         if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "SCTransform" | 
+                             !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "SCTransform") {
+                           DEtestobj <- PrepSCTFindMarkers(seuratreactive$obj)
+                         }
+                         else {
+                           DEtestobj <- seuratreactive$obj
+                         }
+                         
+                         markersDE <- FindMarkers(DEtestobj, ident.1 = input$DEInput1, ident.2 = input$DEInput2, only.pos = input$onlyposDE,
                                                   logfc.threshold = input$logDE, min.pct = input$minDE,
                                                   test.use = input$testuseDE)
                          
@@ -35245,6 +35344,7 @@ server <- function(input, output, session) {
                          
                          incProgress(10/10)
                          
+                         seuratreactive$onlyposDE <- input$onlyposDE
                          seuratreactive$DEInput1_samples <- input$DEInput1_samples
                          seuratreactive$DEInput2_samples <- input$DEInput2_samples
                          seuratreactive$DECluster <- input$DECluster
@@ -35271,7 +35371,15 @@ server <- function(input, output, session) {
                          
                          Idents(seuratreactive$obj) <- seuratreactive$obj@meta.data$seurat_clusters
                          
-                         markersDE <- FindMarkers(seuratreactive$obj, ident.1 = input$DEInput1_samples, ident.2 = input$DEInput2_samples, group.by = "orig.ident", 
+                         if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "SCTransform" | 
+                             !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "SCTransform") {
+                           DEtestobj <- PrepSCTFindMarkers(seuratreactive$obj)
+                         }
+                         else {
+                           DEtestobj <- seuratreactive$obj
+                         }
+                         
+                         markersDE <- FindMarkers(DEtestobj, ident.1 = input$DEInput1_samples, ident.2 = input$DEInput2_samples, group.by = "orig.ident", only.pos = input$onlyposDE,
                                                   subset.ident = input$DECluster,
                                                   logfc.threshold = input$logDE, min.pct = input$minDE,
                                                   test.use = input$testuseDE)
@@ -35352,6 +35460,7 @@ server <- function(input, output, session) {
                          
                          incProgress(10/10)
                          
+                         seuratreactive$onlyposDE <- input$onlyposDE
                          seuratreactive$DEInput1_samples <- input$DEInput1_samples
                          seuratreactive$DEInput2_samples <- input$DEInput2_samples
                          seuratreactive$DECluster <- input$DECluster
@@ -35384,7 +35493,15 @@ server <- function(input, output, session) {
                            seuratreactive$obj <- RenameIdents(seuratreactive$obj, seuratreactive$new.cell.ids)
                          }
                          
-                         markersDE <- FindMarkers(seuratreactive$obj, ident.1 = input$DEInput1_samples, ident.2 = input$DEInput2_samples, group.by = "orig.ident", 
+                         if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "SCTransform" | 
+                             !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "SCTransform") {
+                           DEtestobj <- PrepSCTFindMarkers(seuratreactive$obj)
+                         }
+                         else {
+                           DEtestobj <- seuratreactive$obj
+                         }
+                         
+                         markersDE <- FindMarkers(DEtestobj, ident.1 = input$DEInput1_samples, ident.2 = input$DEInput2_samples, group.by = "orig.ident", only.pos = input$onlyposDE,
                                                   subset.ident = input$DECluster,
                                                   logfc.threshold = input$logDE, min.pct = input$minDE,
                                                   test.use = input$testuseDE)
@@ -35467,6 +35584,7 @@ server <- function(input, output, session) {
                          
                          incProgress(10/10)
                          
+                         seuratreactive$onlyposDE <- input$onlyposDE
                          seuratreactive$DEInput1_samples <- input$DEInput1_samples
                          seuratreactive$DEInput2_samples <- input$DEInput2_samples
                          seuratreactive$DECluster <- input$DECluster
@@ -36273,6 +36391,14 @@ server <- function(input, output, session) {
     }
   })
   
+  output$plotSDE1UI <- renderUI({
+    plotlyOutput("plotSDE1", height = (300 + input$customplotheight*40))
+  })
+  
+  output$plotSDE2UI <- renderUI({
+    plotlyOutput("plotSDE2", height = (300 + input$customplotheight*40))
+  })
+  
   output$plotSDE1 <- renderPlotly({
     validate(
       need(!is.null(seuratreactive$plot.data), "You must complete the clustering step"))
@@ -36742,10 +36868,17 @@ server <- function(input, output, session) {
                          seuratreactive$selectedkey2 <- selected2()$key
                        }
                        
+                       if (!is.null(seuratreactive$SCTransformDR) && seuratreactive$SCTransformDR == "SCTransform" | 
+                           !is.null(seuratreactive$SCTransformDR2) && seuratreactive$SCTransformDR2 == "SCTransform") {
+                         DEtestobj <- PrepSCTFindMarkers(seuratreactive$obj)
+                       }
+                       else {
+                         DEtestobj <- seuratreactive$obj
+                       }
                        
-                       markersSDE <- FindMarkers(seuratreactive$obj, ident.1 = seuratreactive$selectedkey1, ident.2 = seuratreactive$selectedkey2,
-                                                logfc.threshold = input$logSDE, min.pct = input$minSDE,
-                                                test.use = input$testuseSDE)
+                       markersSDE <- FindMarkers(DEtestobj, ident.1 = seuratreactive$selectedkey1, ident.2 = seuratreactive$selectedkey2, only.pos = input$onlyposSDE,
+                                                 logfc.threshold = input$logSDE, min.pct = input$minSDE,
+                                                 test.use = input$testuseSDE)
                        
                        markersSDE$p_val_adj = p.adjust(markersSDE$p_val, method=input$padjustSDE1)
                        
@@ -36822,6 +36955,7 @@ server <- function(input, output, session) {
                        colnames(seuratreactive$YuSDE) <- c("ID", "Description", "Adjusted p-value")
                        seuratreactive$YuSDE$`Adjusted p-value` <- signif(seuratreactive$YuSDE$`Adjusted p-value`, digits = 4)
                        
+                       seuratreactive$onlyposSDE <- input$onlyposSDE
                        seuratreactive$logSDE <- input$logSDE
                        seuratreactive$minSDE <- input$minSDE
                        seuratreactive$padjustSDE1 <- input$padjustSDE1
@@ -37698,11 +37832,13 @@ server <- function(input, output, session) {
       need(nrow(Yu$result) > 0, 'No enriched terms found. Please make sure you have enough variability between the two groups of cells being compared. Try increasing the number of cells compared. Please also check if your starting species is correct.'))
     
     if (input$radioPA == "Dot Plot") {
-    seuratreactive$dotplotPA <- dotplot(Yu$result, showCategory = input$DotPlotNumber, font.size = input$fontPA_Dot)
+      seuratreactive$dotplotPA <- dotplot(Yu$result, showCategory = input$DotPlotNumber, font.size = input$fontPA_Dot)
     }
     else if (input$radioPA == "Ridge Plot") {
       seuratreactive$dotplotPA <- ridgeplot(Yu$result, showCategory = input$DotPlotNumber) +
-        theme(text = element_text(size=input$fontPA_Dot))
+        theme(text = element_text(size=input$fontPA_Dot),
+              axis.text.x= element_text(size = input$fontPA_Dot),
+              axis.text.y= element_text(size = input$fontPA_Dot))
     }
     else if (input$radioPA == "Heatmap") {
       seuratreactive$dotplotPA <- heatplot(Yu$result, foldChange=seuratreactive$geneListPA, showCategory=input$DotPlotNumber) +
@@ -37757,7 +37893,7 @@ server <- function(input, output, session) {
     Yu$ema <- pairwise_termsim(Yu$result)
     
     seuratreactive$emapplotPA <- emapplot(Yu$ema, showCategory = input$EMNumber, cex_label_category = input$fontPA_EM, cex_line = input$linePA_EM, cex_category = input$nodePA_EM)
-
+    
     seuratreactive$emapplotPA
   })
   
@@ -37770,9 +37906,9 @@ server <- function(input, output, session) {
       need(nrow(Yu$result) > 0, 'No enriched terms found. Please make sure you have enough variability between the two groups of cells being compared. Try increasing the number of cells compared. Please also check if your starting species is correct.'))
     
     Yu$ema <- pairwise_termsim(Yu$result)
-
+    
     seuratreactive$treeplotPA <- treeplot(Yu$ema, fontsize = input$fontPA_T, showCategory = input$TreeNumber, nCluster = input$ClustersPA_T)
-
+    
     seuratreactive$treeplotPA
   })
   
@@ -38107,12 +38243,15 @@ server <- function(input, output, session) {
     }
     else if (input$radioSPA == "Ridge Plot") {
       seuratreactive$dotplotSPA <- ridgeplot(YuSPA$result, showCategory = input$DotPlotNumberSPA) +
-        theme(text = element_text(size=input$fontSPA_Dot))
+        theme(text = element_text(size=input$fontSPA_Dot),
+              axis.text.x= element_text(size = input$fontSPA_Dot),
+              axis.text.y= element_text(size = input$fontSPA_Dot))
     }
     else if (input$radioSPA == "Heatmap") {
       seuratreactive$dotplotSPA <- heatplot(YuSPA$result, foldChange=seuratreactive$geneListSPA, showCategory=input$DotPlotNumberSPA) +
-        theme(axis.text.x = element_text(angle = 90, vjust=0.5),
-              text = element_text(size=input$fontSPA_Dot))
+        theme(text = element_text(size=input$fontSPA_Dot),
+              axis.text.x= element_text(size = input$fontSPA_Dot),
+              axis.text.y= element_text(size = input$fontSPA_Dot))
     }
     seuratreactive$dotplotSPA
   })
