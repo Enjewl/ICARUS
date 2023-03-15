@@ -100,8 +100,7 @@ The test server with latest updates is available at <a href="https://launch.icar
 
 The application is free and open to all users with no login requirement. Alternatively, a docker version is accessible through the Docker Hub under the name ‘icarusscrnaseq/icarus’.
 
-Source code is provided under the folder ICARUS_application/app.R 
-
+Source code is can be accessed at <a href="https://zenodo.org/record/7735960" target="_blank">https://zenodo.org/record/7735960</a>.
 **NOTE: Source code cannot be used to run ICARUS due to dependencies on several external files.**
 
 ### Installation
